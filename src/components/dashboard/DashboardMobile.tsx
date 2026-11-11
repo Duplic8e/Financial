@@ -10,6 +10,8 @@ import { netWorthTrend } from '../../utils/accounts/accountValuation'
 import { countsAsIncome } from '../../utils/budget/sharedExpenses'
 import { detectRecurring } from '../../utils/budget/recurring'
 import { forecastMonthEnd } from '../../utils/budget/cashFlowForecast'
+import { unpaidBillsThisMonth } from '../../utils/budget/cashPlan'
+import { useRecurringStore } from '../../store/useRecurringStore'
 import { inRange } from '../../utils/budget/period'
 import { formatMoney } from '../planner/format'
 import { AnimatedNumber } from '../ui/AnimatedNumber'
@@ -82,7 +84,11 @@ const MonthCard: React.FC<{ projected: boolean; range: { from: string; to: strin
   const expense = list.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const net = income - expense
   const today = new Date().toISOString().slice(0, 10)
-  const forecast = projected ? forecastMonthEnd(transactions, detectRecurring(transactions), range.to, today) : null
+  const plannedBills = useRecurringStore((s) => s.plannedBills)
+  const detected = projected ? detectRecurring(transactions) : []
+  const forecast = projected
+    ? forecastMonthEnd(transactions, detected, range.to, today, unpaidBillsThisMonth(plannedBills, transactions, range.to, detected.map((d) => d.description)))
+    : null
 
   const used = income > 0 ? Math.min(1, expense / income) : expense > 0 ? 1 : 0
   const tone = (n: number) => (n >= 0 ? 'text-text-primary' : 'text-error')

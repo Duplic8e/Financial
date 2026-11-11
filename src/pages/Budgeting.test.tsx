@@ -32,7 +32,8 @@ describe('Budgeting header (mobile de-duplication)', () => {
     setMatchMedia(false)
     renderBudget()
     fireEvent.click(screen.getByRole('button', { name: 'Time Period' }))
-    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(
+    // The sheet's own choices, not the native <option>s of the Cash Plan period menu.
+    expect(screen.getAllByRole('option').filter((o) => o.tagName !== 'OPTION').map((o) => o.textContent)).toEqual(
       ['This Month', 'Last Month', 'Last 3 Months', 'Last 6 Months', 'Last 12 Months', 'Year to Date'],
     )
     fireEvent.click(screen.getByRole('option', { name: 'Last 3 Months' }))

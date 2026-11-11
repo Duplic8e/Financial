@@ -3,6 +3,8 @@ import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useBudgetStore } from '../../store/useBudgetStore';
 import { detectRecurring } from '../../utils/budget/recurring';
 import { forecastMonthEnd } from '../../utils/budget/cashFlowForecast';
+import { unpaidBillsThisMonth } from '../../utils/budget/cashPlan';
+import { useRecurringStore } from '../../store/useRecurringStore';
 import { formatMoney } from '../planner/format';
 import { countsAsIncome } from '../../utils/budget/sharedExpenses';
 import { inRange, isSingleMonth, monthKeyOf, type MonthRange } from '../../utils/budget/period';
@@ -31,7 +33,10 @@ export const MonthlySummaryWidget: React.FC<MonthlySummaryWidgetProps> = ({ rang
 
   const today = new Date().toISOString().slice(0, 10);
   const showForecast = isSingleMonth(range) && range.to === monthKeyOf(new Date());
-  const forecast = forecastMonthEnd(transactions, detectRecurring(transactions), range.to, today);
+  const plannedBills = useRecurringStore((s) => s.plannedBills);
+  const detected = detectRecurring(transactions);
+  const forecast = forecastMonthEnd(transactions, detected, range.to, today,
+    unpaidBillsThisMonth(plannedBills, transactions, range.to, detected.map((d) => d.description)));
   const pendingSummary = forecast.pending
     .slice(0, 5)
     .map((p) => `${p.expectedDate}: ${p.type === 'income' ? `+${formatMoney(p.amount)}` : formatMoney(-p.amount)} ${p.description}`)

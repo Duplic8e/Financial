@@ -18,6 +18,8 @@ export function forecastMonthEnd(
   recurring: RecurringItem[],
   month: string, // YYYY-MM
   today: string, // YYYY-MM-DD
+  /** Hand-entered bills not yet paid this month (see unpaidBillsThisMonth). */
+  plannedUnpaid: CashFlowForecast['pending'] = [],
 ): CashFlowForecast {
   let netSoFar = 0
   for (const t of Object.values(transactions)) {
@@ -38,6 +40,8 @@ export function forecastMonthEnd(
       cursor.setDate(cursor.getDate() + item.intervalDays)
     }
   }
+
+  pending.push(...plannedUnpaid)
 
   const expectedIn = pending.filter((p) => p.type === 'income').reduce((s, p) => s + p.amount, 0)
   const expectedOut = pending.filter((p) => p.type === 'expense').reduce((s, p) => s + p.amount, 0)

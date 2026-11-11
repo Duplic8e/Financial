@@ -7,6 +7,11 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Added
+- Cash Plan on Budgeting → Overview ties the sections together: salary from Compensation, less estimated tax, CPP and EI, less your ESPP contribution, gives take-home; recurring bills and the rest of your budget targets come out of that, leaving what is left over or short. One menu restates every line weekly, biweekly, monthly or yearly.
+- Recurring bills: add rent, phone, insurance or anything on a schedule in the Cash Plan, with an amount, how often, the day it is due and an optional budget category. A bill filed under a category is not counted a second time against that category's target.
+- Unpaid recurring bills now count in this month's Projected Net until a matching transaction is imported.
+- An ESPP section on Compensation: contribution and discount percent, the day you enrolled, the enrollment period in months, the lookback price and the purchase price that locked. It shows what comes off pay per month and year, the price you are buying at, the gain at today's price, when the period ends and the time left. Edits save as you type.
+- A monthly import reminder: from the 1st of each month until you import, the Dashboard and Budgeting show "Time to import". Remind Me on the 1st adds a repeating calendar event with an alert, and a notification is shown on opening the app when reminders are on.
 - Sort the Categorize page by Newest, Oldest, Most Transactions, Largest Total or Store Name. The choice is remembered on this device.
 - Restore All on Excluded Imports sends every excluded or ignored entry back to review at once, with Undo.
 - On the Categorize page, Categorize Them Too moves transfers and card payments that were set aside into the queue, where they can be filed or marked Not Spending like any other store.

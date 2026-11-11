@@ -22,6 +22,8 @@ interface TriageState {
   importRecords: Record<string, ImportRecord>;
   importDays: ImportDay[];
   lastImport: ImportReport | null;
+  /** When transactions were last imported (ISO date), for the monthly reminder. */
+  lastImportAt?: string;
   saveExclusionRule: (draft: ExclusionRuleDraft, options?: { id?: string; applyPending?: boolean }) => string;
   setExclusionRuleEnabled: (id: string, enabled: boolean) => void;
   deleteExclusionRule: (id: string) => void;
@@ -252,7 +254,7 @@ export const useTriageStore = create<TriageState>()(
         const newIds = new Set(excluded.pending.map(tx => tx.id));
         const autoAddedIds = get().addRuleMatches().filter(id => newIds.has(id));
         const finalReport = { ...report, autoAddedIds };
-        set({ lastImport: finalReport });
+        set({ lastImport: finalReport, lastImportAt: new Date().toISOString().slice(0, 10) });
         return finalReport;
       },
 

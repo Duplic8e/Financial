@@ -4,6 +4,7 @@ import { PageHeader, TopBarAction } from '../components/ui/PageHeader'
 import { CompHeroWidget } from '../components/compensation/CompHeroWidget'
 import { CompensationModal } from '../components/compensation/CompensationModal'
 import { EquityVestingWidget } from '../components/compensation/EquityVestingWidget'
+import { EsppCard } from '../components/compensation/EsppCard'
 import { CompareView } from '../components/compensation/CompareView'
 import { useCompensationStore, calcTotalComp, calcAnnualBaseSalary } from '../store/useCompensationStore'
 import { useCompensationDisplay } from '../hooks/useCompensationDisplay'
@@ -168,7 +169,7 @@ export const Compensation: React.FC = () => {
 
       {!isDesktop && isPopulated && (
         <CompensationMobile
-          equity={<EquityVestingWidget />}
+          equity={<><EsppCard /><EquityVestingWidget /></>}
           compare={
             <>
               <button
@@ -257,6 +258,7 @@ export const Compensation: React.FC = () => {
 
         {isPopulated && (
           <>
+            <EsppCard />
             <EquityVestingWidget />
 
             <div className="flex justify-end">
