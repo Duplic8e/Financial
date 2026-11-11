@@ -6,6 +6,12 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Changed
+- A new iOS-style look. The six themes are replaced by Light and Dark in the colors of Apple's own apps, with the system font (San Francisco on iPhone), grouped white or dark cards on a grey background, large bold page titles and blue bar buttons. Settings → Appearance picks System, Light or Dark; System follows your iPhone, including the automatic switch at sunset. Every earlier theme choice moves to System.
+- On iPhone the top bar now sits below the Dynamic Island and the status bar instead of under them, and the tab bar is translucent with the home indicator's space below it.
+- No web fonts are downloaded any more, so the app opens faster.
+- When Ledger is opened from the Hub, it backs itself up to the Hub's private data repo and shows a Back to Hub button in the top bar.
+
 ## [0.26.5-beta] - 2026-10-19
 
 ### Changed

@@ -15,7 +15,7 @@ import { THEME_BACKGROUNDS, type AppTheme } from './store/useThemeStore'
 // URL. Node's own URL resolves it correctly, sidestepping jsdom entirely.
 const css = readFileSync(new NodeURL('./index.css', import.meta.url), 'utf8')
 
-const THEMES: AppTheme[] = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau']
+const THEMES: AppTheme[] = ['light', 'dark']
 
 // Generalized over blockFor so the bare :root block (which is not keyed by
 // theme name) can be read the same way as a [data-theme='x'] block.
@@ -42,13 +42,12 @@ function tokensIn(theme: string): string[] {
   return [...blockFor(theme).matchAll(/^\s*(--[a-z0-9-]+)\s*:/gim)].map((m) => m[1])
 }
 
-// Geometric is the reference set: it is the oldest block and every other
-// theme has always mirrored it. A theme may declare extra tokens of its own
-// (nouveau adds --ornament and --card-gradient); it may not be missing one.
-const REQUIRED = tokensIn('geometric')
+// Light is the reference set. Dark may declare extra tokens of its own; it
+// may not be missing one.
+const REQUIRED = tokensIn('light')
 
 describe('theme token blocks', () => {
-  it.each(THEMES)('%s declares every token geometric declares', (theme) => {
+  it.each(THEMES)('%s declares every token light declares', (theme) => {
     const present = tokensIn(theme)
     expect(REQUIRED.filter((t) => !present.includes(t))).toEqual([])
   })
@@ -65,12 +64,9 @@ describe('theme token blocks', () => {
     expect(THEME_BACKGROUNDS[theme].toLowerCase()).toBe(match![1].toLowerCase())
   })
 
-  it('the light theme accent clears AA on its own 10% tint', () => {
-    // #2563eb measured 4.48:1 on accent/10 over a white card, which axe reports
-    // as a serious violation on every route. Anything lighter than #1d4ed8
-    // reopens that.
-    for (const block of [':root', "[data-theme='geometric']"]) {
-      expect(tokenFor(block, '--accent')).toBe('#1d4ed8')
+  it('the first paint (:root) is the light palette', () => {
+    for (const token of ['--bg-primary', '--accent', '--text-primary', '--text-secondary']) {
+      expect(tokenFor(':root', token)).toBe(tokenFor("[data-theme='light']", token))
     }
   })
 })

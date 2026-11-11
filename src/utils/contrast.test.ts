@@ -33,7 +33,7 @@ describe('theme token contrast', () => {
   // it that, so its contrast is checked alongside the real themes.
   it('finds every theme defined in index.css', () => {
     const names = blocks.map((b) => b.name).sort()
-    expect(names).toEqual(['aurora', 'geometric', 'glass', 'luxury', 'nouveau', 'root', 'tactical'])
+    expect(names).toEqual(['dark', 'light', 'root'])
   })
 
   it.each(blocks.map((b) => [b.name, b] as const))(

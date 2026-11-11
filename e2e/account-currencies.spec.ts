@@ -322,9 +322,13 @@ test('backup export and restore keep native currencies, marker, history, and rat
   })
   await page.reload()
   await page.getByRole('button', { name: 'Settings', exact: true }).first().click()
+  // Restoring reloads the page. Wait for that reload, or the reads below can
+  // land in the page that is being torn down.
+  const reloaded = page.waitForEvent('load')
   await page.getByRole('dialog', { name: 'Settings' }).locator('input[type="file"]').setInputFiles({
     name: 'ledger-backup.json', mimeType: 'application/json', buffer: backup,
   })
+  await reloaded
   await expect(page.getByTestId('account-row-usd')).toContainText('$1,000.00')
   const restored = await saved(page)
   expect(restored.accounts).toEqual(exported.data['accounts-storage'].state.accounts)

@@ -1,8 +1,7 @@
 import React from 'react'
 import { Bell, ChevronRight, Database, LineChart, Palette, RefreshCw } from 'lucide-react'
-import { ThemeSwatchGrid } from '../theme/ThemeSwatchGrid'
-import { SWATCHES } from '../theme/themeSwatches'
-import { useThemeStore } from '../../store/useThemeStore'
+import { AppearancePicker } from '../theme/AppearancePicker'
+import { THEME_PREFERENCES, useThemeStore } from '../../store/useThemeStore'
 import { InfoButton } from '../ui/InfoButton'
 
 interface SettingsMobileProps {
@@ -40,10 +39,11 @@ const Fold: React.FC<{ icon: React.ReactNode; title: string; summary?: React.Rea
 /** Phone Settings: one fold per section with its current state on the right, Appearance
  *  open first, so the whole sheet fits one screen until you open something. */
 export const SettingsMobile: React.FC<SettingsMobileProps> = (p) => {
-  const themeName = SWATCHES[useThemeStore((s) => s.theme)].name
+  const preference = useThemeStore((s) => s.preference)
+  const themeName = THEME_PREFERENCES.find((t) => t.value === preference)?.label ?? 'System'
   return (
     <>
-      <Fold icon={<Palette className="w-5 h-5" />} title="Appearance" summary={themeName} defaultOpen><ThemeSwatchGrid /></Fold>
+      <Fold icon={<Palette className="w-5 h-5" />} title="Appearance" summary={themeName} defaultOpen><AppearancePicker /></Fold>
       <Fold icon={<LineChart className="w-5 h-5" />} title="Market Data" summary={p.marketBadge}>{p.market}</Fold>
       <Fold icon={<RefreshCw className="w-5 h-5" />} title="Transactions" summary={p.refundsOn ? 'Refunds Enabled' : 'Refunds Disabled'}>
         <div className="flex items-center gap-1 min-h-11">

@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -17,14 +16,12 @@
   --color-error: var(--error);
   --color-success: var(--success);
 
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-serif: 'Playfair Display', serif;
-  --font-display: 'Outfit', sans-serif;
-  --font-space: 'Space Grotesk', sans-serif;
-  --font-lato: 'Lato', sans-serif;
-  --font-poppins: 'Poppins', sans-serif;
-  --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+  /* System fonts only: San Francisco on Apple devices, the platform UI
+     font elsewhere. No web fonts to download. */
+  --font-sans: var(--font-family-body);
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --font-serif: var(--font-family-display);
+  --font-display: var(--font-family-display);
 
   --color-card-bg: var(--card-bg);
   --color-card-border: var(--card-border);
@@ -56,251 +53,113 @@
 @custom-variant wide (@media (min-width: 912px));
 
 :root {
-  /* Default/Fallback values matching Geometric Light */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --accent: #1d4ed8;  /* 6.70:1 on #ffffff, 5.74:1 on accent/10 over the card */
-  --border-color: #e5e7eb;
-  --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
-  --error: #dc2626;
-  --success: #15803d;
-  --chart-1: #2563eb;
-  --chart-2: #8b5cf6;
-  --chart-3: #f59e0b;
-  --chart-4: #ec4899;
-  --chart-5: #06b6d4;
-  --chart-6: #ef4444;
+  /* The iOS-style pair. :root is the light palette so the first paint
+     before App sets data-theme is never unstyled. */
+  --bg-primary: #f2f2f7;      /* iOS systemGroupedBackground */
+  --bg-secondary: #ffffff;    /* iOS secondarySystemGroupedBackground */
+  --text-primary: #000000;    /* label */
+  --text-secondary: #636366;  /* secondaryLabel, darkened for AA on the grouped background */
+  --accent: #0058b0;          /* systemBlue, darkened so accent text clears AA on its own 15% tint */
+  --border-color: #e5e5ea;    /* separator */
+  --border-strong: #8a8a8e;   /* control outlines, 3:1 or better on white */
+  --error: #d70015;           /* accessible systemRed */
+  --success: #1f7a35;         /* accessible systemGreen */
+  --chart-1: #0058b0;
+  --chart-2: #af52de;
+  --chart-3: #ff9500;
+  --chart-4: #ff2d55;
+  --chart-5: #30b0c7;
+  --chart-6: #ff3b30;
 
-  --font-family-body: 'Inter', sans-serif;
-  --font-family-display: 'Space Grotesk', sans-serif;
-
-  --card-bg: #ffffff;
-  --card-border: #e5e7eb;
-  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --card-blur: none;
-  --dock-bg: rgba(255, 255, 255, 0.2);
-  --dock-blur: none;
-  --dropdown-bg: #ffffff;
-
-  color-scheme: light;
-  --calendar-filter: invert(0);
-}
-
-[data-theme='geometric'] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --accent: #1d4ed8;  /* 6.70:1 on #ffffff, 5.74:1 on accent/10 over the card */
-  --border-color: #e5e7eb;
-  --border-strong: #6b7280;   /* 4.83:1 on #ffffff */
-  --error: #dc2626;
-  --success: #15803d;
-  --chart-1: #2563eb;
-  --chart-2: #8b5cf6;
-  --chart-3: #f59e0b;
-  --chart-4: #ec4899;
-  --chart-5: #06b6d4;
-  --chart-6: #ef4444;
-
-  --font-family-body: 'Inter', sans-serif;
-  --font-family-display: 'Space Grotesk', sans-serif;
+  --font-family-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   --card-bg: #ffffff;
-  --card-border: #e5e7eb;
-  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --card-blur: none;
-  --dock-bg: rgba(255, 255, 255, 0.2);
-  --dock-blur: none;
-  --dropdown-bg: #ffffff;
-
-  color-scheme: light;
-  --calendar-filter: invert(0);
-}
-
-[data-theme='tactical'] {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #171717;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent: #10b981;
-  --border-color: #27272a;
-  --border-strong: #71717a;   /* 4.10:1 on #0a0a0a, 3.91:1 on #111111 */
-  --error: #ff3b30;
-  --success: #4ade80;
-  --chart-1: #10b981;
-  --chart-2: #8b5cf6;
-  --chart-3: #f59e0b;
-  --chart-4: #ec4899;
-  --chart-5: #3b82f6;
-  --chart-6: #ef4444;
-
-  --font-family-body: 'JetBrains Mono', monospace;
-  --font-family-display: 'JetBrains Mono', monospace;
-
-  --card-bg: #111111;
-  --card-border: #27272a;
+  --card-border: #ffffff;
   --card-shadow: none;
   --card-blur: none;
-  --dock-bg: rgba(10, 10, 10, 0.2);
-  --dock-blur: none;
-  --dropdown-bg: #111111;
-
-  color-scheme: dark;
-  --calendar-filter: invert(0.8) hue-rotate(180deg);
-}
-
-[data-theme='luxury'] {
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --accent: #d4a853;
-  --border-color: #1a1a1a;
-  --border-strong: #6b6b6b;   /* 3.94:1 on #000000, 3.72:1 on #0a0a0a */
-  --error: #e5484d;
-  --success: #4ade80;
-  --chart-1: #d4a853;
-  --chart-2: #8b5cf6;
-  --chart-3: #38bdf8;
-  --chart-4: #ec4899;
-  --chart-5: #34d399;
-  --chart-6: #ef4444;
-
-  --font-family-body: 'Lato', sans-serif;
-  --font-family-display: 'Playfair Display', serif;
-
-  --card-bg: #0a0a0a;
-  --card-border: #1a1a1a;
-  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-  --card-blur: none;
-  --dock-bg: rgba(0, 0, 0, 0.2);
-  --dock-blur: none;
-  --dropdown-bg: #0a0a0a;
-
-  color-scheme: dark;
-  --calendar-filter: invert(0.8) hue-rotate(180deg);
-}
-
-[data-theme='aurora'] {
-  --bg-primary: #090d16;
-  --bg-secondary: #0f172a;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent: #34d399;
-  --border-color: #1e293b;
-  --border-strong: #64748b;   /* 4.08:1 on #090d16, 3.84:1 on the card */
-  --error: #f87171;
-  --success: #4ade80;
-  --chart-1: #34d399;
-  --chart-2: #a78bfa;
-  --chart-3: #fbbf24;
-  --chart-4: #f472b6;
-  --chart-5: #38bdf8;
-  --chart-6: #f87171;
-
-  --font-family-body: 'Poppins', sans-serif;
-  --font-family-display: 'Outfit', sans-serif;
-
-  --card-bg: rgba(15, 23, 42, 0.75);
-  --card-gradient: linear-gradient(145deg, rgba(52, 211, 153, 0.055) 0%, rgba(56, 189, 248, 0.02) 48%, rgba(167, 139, 250, 0.06) 100%);
-  --card-border: rgba(30, 41, 59, 0.55);
-  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-  --card-blur: none;
-  --dock-bg: rgba(9, 13, 22, 0.2);
-  --dock-blur: none;
-  --dropdown-bg: #0f172a;
-
-  color-scheme: dark;
-  --calendar-filter: invert(0.8) hue-rotate(180deg);
-}
-
-[data-theme='glass'] {
-  --bg-primary: #0b0910;
-  --bg-secondary: rgba(255, 255, 255, 0.04);
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --accent: #22d3ee;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.40);  /* 3.77:1 on #0b0910, 3.83:1 on the card */
-  --error: #fb7185;
-  --success: #4ade80;
-  --chart-1: #22d3ee;
-  --chart-2: #a78bfa;
-  --chart-3: #fbbf24;
-  --chart-4: #f472b6;
-  --chart-5: #34d399;
-  --chart-6: #f87171;
-
-  --font-family-body: 'Inter', sans-serif;
-  --font-family-display: 'Plus Jakarta Sans', sans-serif;
-
-  --card-bg: rgba(255, 255, 255, 0.04);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --card-blur: blur(12px);
-  --dock-bg: rgba(11, 9, 16, 0.2);
-  --dock-blur: none;
-  --dropdown-bg: #1a1625;
-
-  color-scheme: dark;
-  --calendar-filter: invert(0.8) hue-rotate(180deg);
-}
-
-/* Gilded Bloom: the second light theme, and the first with any depth to it.
-   Where `geometric` is flat white on white, this one gets its elevation from
-   four stacked things: a warm-tinted shadow rather than a grey one, a
-   gradient card fill, a 1px white inner top highlight folded into the same
-   box-shadow, and the wash ThemeBackground paints behind everything.
-
-   Contrast against --bg-primary #FDF6EA: accent 5.77:1, text-primary
-   14.45:1, text-secondary 5.23:1 on the page and 5.53:1 on a card,
-   border-strong 3.41:1 on the page and 3.60:1 on a card, error 5.06:1.
-
-   --text-secondary is also checked against the --bg-secondary sidebar
-   composite, not only the page: the desktop sidebar's inactive nav links
-   sit on bg-bg-secondary/70 over the ThemeBackground wash, and that
-   composite is the binding constraint, measuring as low as 4.74:1. Retune
-   against it too, not just the figures above, if this token changes again.
-
-   --ornament is 2.34:1 and is decoration only. It must never carry text or
-   mark a control. SidebarFloral is its only consumer. */
-[data-theme='nouveau'] {
-  --bg-primary: #FDF6EA;
-  --bg-secondary: #F5EDDD;
-  --text-primary: #22251F;
-  --text-secondary: #65695E;
-  --accent: #2F6B5E;
-  --border-color: #EADFCB;
-  --border-strong: #8C866B;   /* 3.41:1 on #FDF6EA, 3.60:1 on the card */
-  --error: #B04A2E;
-  --success: #2f7a4a;
-  --chart-1: #2F6B5E;
-  --chart-2: #A8842F;
-  --chart-3: #9A5A6B;
-  --chart-4: #7B7F52;
-  --chart-5: #46708F;
-  --chart-6: #B04A2E;
-
-  /* Gold leaf for the sidebar ornament. Not a text or control colour. */
-  --ornament: #C49E4A;
-
-  --font-family-body: 'Poppins', sans-serif;
-  --font-family-display: 'Playfair Display', serif;
-
-  --card-bg: #FFFDF9;
-  --card-gradient: linear-gradient(172deg, #FFFDF9 0%, #FCF5E8 100%);
-  --card-border: #EDE2CE;
-  --card-shadow: 0 1px 2px rgba(60, 60, 30, 0.06), 0 12px 30px -14px rgba(60, 60, 30, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  --card-blur: none;
-  --dock-bg: rgba(253, 246, 234, 0.82);
-  --dock-blur: blur(10px);
-  --dropdown-bg: #FFFDF9;
+  /* Navigation and tab bars: the iOS translucent material. */
+  --bar-bg: rgba(249, 249, 249, 0.86);
+  --bar-blur: saturate(180%) blur(20px);
+  --dock-bg: rgba(242, 242, 247, 0.86);
+  --dock-blur: saturate(180%) blur(20px);
+  --dropdown-bg: #ffffff;
 
   color-scheme: light;
   --calendar-filter: invert(0);
+
+  /* iPhone notch / Dynamic Island and home indicator. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+[data-theme='light'] {
+  --bg-primary: #f2f2f7;      /* iOS systemGroupedBackground */
+  --bg-secondary: #ffffff;    /* iOS secondarySystemGroupedBackground */
+  --text-primary: #000000;    /* label */
+  --text-secondary: #636366;  /* secondaryLabel, darkened for AA on the grouped background */
+  --accent: #0058b0;          /* systemBlue, darkened so accent text clears AA on its own 15% tint */
+  --border-color: #e5e5ea;    /* separator */
+  --border-strong: #8a8a8e;   /* control outlines, 3:1 or better on white */
+  --error: #d70015;           /* accessible systemRed */
+  --success: #1f7a35;         /* accessible systemGreen */
+  --chart-1: #0058b0;
+  --chart-2: #af52de;
+  --chart-3: #ff9500;
+  --chart-4: #ff2d55;
+  --chart-5: #30b0c7;
+  --chart-6: #ff3b30;
+
+  --font-family-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --card-bg: #ffffff;
+  --card-border: #ffffff;
+  --card-shadow: none;
+  --card-blur: none;
+  /* Navigation and tab bars: the iOS translucent material. */
+  --bar-bg: rgba(249, 249, 249, 0.86);
+  --bar-blur: saturate(180%) blur(20px);
+  --dock-bg: rgba(242, 242, 247, 0.86);
+  --dock-blur: saturate(180%) blur(20px);
+  --dropdown-bg: #ffffff;
+
+  color-scheme: light;
+  --calendar-filter: invert(0);
+}
+
+[data-theme='dark'] {
+  --bg-primary: #000000;      /* iOS systemGroupedBackground (dark) */
+  --bg-secondary: #1c1c1e;    /* secondarySystemGroupedBackground (dark) */
+  --text-primary: #ffffff;
+  --text-secondary: #98989f;
+  --accent: #409cff;          /* iOS accessible systemBlue (dark): AA on its own tint over cards */
+  --border-color: #38383a;
+  --border-strong: #8e8e93;
+  --error: #ff453a;
+  --success: #30d158;
+  --chart-1: #409cff;
+  --chart-2: #bf5af2;
+  --chart-3: #ff9f0a;
+  --chart-4: #ff375f;
+  --chart-5: #64d2ff;
+  --chart-6: #ff453a;
+
+  --font-family-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --card-bg: #1c1c1e;
+  --card-border: #1c1c1e;
+  --card-shadow: none;
+  --card-blur: none;
+  --bar-bg: rgba(22, 22, 23, 0.82);
+  --bar-blur: saturate(180%) blur(20px);
+  --dock-bg: rgba(0, 0, 0, 0.82);
+  --dock-blur: saturate(180%) blur(20px);
+  --dropdown-bg: #2c2c2e;
+
+  color-scheme: dark;
+  --calendar-filter: invert(0.8) hue-rotate(180deg);
 }
 
 html, body {
@@ -309,15 +168,22 @@ html, body {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-family-body);
+  /* Money lines up in columns, like the Wallet and Stocks apps. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.01em;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-display);
+  letter-spacing: -0.02em;
 }
 
 .themed-card {
   background-color: var(--card-bg);
+  border-radius: 14px;
   /* A theme may layer a gradient over its flat fill. `background-color`
      cannot hold one, so a gradient assigned to --card-bg alone would be an
      invalid background-color and silently drop the card's fill entirely.

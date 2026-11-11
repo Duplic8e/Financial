@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Bell, Database, LineChart, Palette, RefreshCw, Settings, X } from 'lucide-react'
 import { Sheet } from '../ui/Sheet'
-import { ThemeSwatchGrid } from '../theme/ThemeSwatchGrid'
+import { AppearancePicker } from '../theme/AppearancePicker'
 import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { BackupControls } from './BackupControls'
 import { DriveSyncControls } from './DriveSyncControls'
@@ -165,8 +165,8 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
     </div>
 
     {isDesktop ? (<>
-    <SectionCard icon={<Palette className="w-4 h-4" />} title="Appearance" description="Pick a theme for the whole app.">
-      <ThemeSwatchGrid />
+    <SectionCard icon={<Palette className="w-4 h-4" />} title="Appearance" description="Follow your device, or pick Light or Dark.">
+      <AppearancePicker />
     </SectionCard>
 
     <SectionCard icon={<LineChart className="w-4 h-4" />} title="Market Data" badge={<MarketDataStatusBadge />} description="Your key is stored only on this device.">

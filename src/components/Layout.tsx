@@ -1,8 +1,5 @@
 import React, { Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { useThemeStore } from '../store/useThemeStore'
-import { ThemeBackground } from './theme/ThemeBackground'
-import { SidebarFloral } from './theme/SidebarFloral'
 import { SettingsSheet } from './settings/SettingsSheet'
 import { PageTransition } from './ui/PageTransition'
 import { UpdateToast } from './ui/UpdateToast'
@@ -32,7 +29,6 @@ const WhatsNewModal = React.lazy(() => import('./ui/WhatsNewModal').then((m) => 
 
 
 export const Layout: React.FC = () => {
-  const { theme } = useThemeStore()
   const location = useLocation()
   const demoActive = useSyncExternalStore(subscribeDemoActive, isDemoActive, () => false)
   const swUpdate = useSWUpdate()
@@ -170,9 +166,6 @@ export const Layout: React.FC = () => {
         Skip to content
       </a>
 
-      {/* Dynamic Theme Background Decorators */}
-      <ThemeBackground theme={theme} />
-
       {/* Sidebar Navigation */}
       {/* overflow-x-hidden is not redundant next to overflow-y-auto. CSS
           computes a `visible` overflow on one axis to `auto` when the other
@@ -184,11 +177,6 @@ export const Layout: React.FC = () => {
           horizontal scrollbar across the bottom of the sidebar. There is no
           horizontally scrollable content here and there should never be. */}
       <nav className="hidden desktop:flex w-64 shrink-0 relative border-r border-transparent bg-bg-secondary/70 backdrop-blur-[var(--card-blur)] flex-col justify-between overflow-y-auto overflow-x-hidden transition-all duration-300 z-10">
-        {/* Theme ornament, clipped to the sidebar. Renders null for every
-            theme but Gilded Bloom. The nav is `relative z-10`, so it owns a
-            stacking context and the ornament's negative z-index keeps it
-            behind the links without escaping the sidebar. */}
-        <SidebarFloral theme={theme} />
         {/* The divider fades in from the top rather than starting at a hard
             edge with nothing meeting it. Its lower end is already anchored by
             the settings dock's border-t. Absolutely positioned, so it stays
@@ -299,41 +287,43 @@ export const Layout: React.FC = () => {
             keeps five roomy tabs. */}
         <header
           data-testid="mobile-topbar"
-          className="desktop:hidden shrink-0 flex items-center gap-2 px-4 h-12 border-b border-border bg-bg-secondary/70 backdrop-blur-[var(--card-blur)]"
+          className="desktop:hidden shrink-0 flex items-center gap-2 pl-4 pr-2 min-h-[52px] bg-bg-primary"
+          // iOS large-title bar: sits below the status bar and Dynamic Island.
+          style={{ paddingTop: 'var(--safe-top)', boxSizing: 'content-box' }}
         >
           {/* Hidden by the rule in src/index.css while a page fills the slot:
               the page title takes the brand's place, and at 320px the mark,
               a title like "Compensation" and three 44px buttons do not fit
               on one line together. */}
           <span data-topbar-brand className="flex items-center gap-2 shrink-0">
-            <LedgerMark size={20} className="text-accent shrink-0" />
-            <span className="text-[17px] font-bold tracking-tighter text-accent font-display">Ledger</span>
+            <LedgerMark size={24} className="text-accent shrink-0" />
+            <span className="text-[28px] font-bold tracking-tight text-text-primary font-display">Ledger</span>
           </span>
           <div ref={setTopBarSlot} data-topbar-slot className="flex-1 min-w-0 flex items-center gap-2" />
           {HUB_URL && (
             <a
               href={HUB_URL}
               aria-label="Back to Hub"
-              className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full text-accent transition-opacity active:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
             >
-              <LayoutGrid className="w-5 h-5" />
+              <LayoutGrid className="w-[22px] h-[22px]" />
             </a>
           )}
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             aria-label="Search"
-            className={`${HUB_URL ? '-ml-2 ' : ''}flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent`}
+            className={`${HUB_URL ? '-ml-2 ' : ''}flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full text-accent transition-opacity active:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent`}
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-[22px] h-[22px]" />
           </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
-            className="-ml-2 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className="-ml-2 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full text-accent transition-opacity active:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-[22px] h-[22px]" />
           </button>
         </header>
 
@@ -350,7 +340,7 @@ export const Layout: React.FC = () => {
           id="main-content"
           ref={mainRef}
           tabIndex={-1}
-          className="phone-no-scrollbar flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(52px+env(safe-area-inset-bottom)+16px)] desktop:pb-8"
+          className="phone-no-scrollbar flex-1 min-w-0 overflow-auto overscroll-contain overflow-x-hidden px-4 pt-4 sm:px-8 sm:pt-8 pb-[calc(50px+var(--safe-bottom)+20px)] desktop:pb-8"
         >
           {/* Polite, not assertive: a route change should be announced after
               whatever the user was already hearing, not interrupt it. */}
@@ -379,8 +369,10 @@ export const Layout: React.FC = () => {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="desktop:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border flex"
-        style={{ backgroundColor: 'var(--dropdown-bg)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="desktop:hidden fixed bottom-0 inset-x-0 z-20 flex border-t-[0.5px] border-border"
+        // The iOS tab bar: translucent material over the content scrolling beneath it,
+        // with the home indicator's inset below the items.
+        style={{ backgroundColor: 'var(--bar-bg)', backdropFilter: 'var(--bar-blur)', WebkitBackdropFilter: 'var(--bar-blur)', paddingBottom: 'var(--safe-bottom)' }}
         aria-label="Primary"
       >
         {navItems.map((item) => {
@@ -391,11 +383,11 @@ export const Layout: React.FC = () => {
               key={item.path}
               to={item.path}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[52px] text-micro font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
+              className={`flex-1 min-w-0 flex flex-col items-center justify-start pt-1.5 gap-[3px] min-h-[50px] text-micro font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent ${
                 isActive ? 'text-accent' : 'text-text-secondary'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-6 h-6" strokeWidth={isActive ? 2.25 : 1.75} />
               <span className="max-w-full truncate px-0.5 tracking-tight">{item.shortName ?? item.name}</span>
             </Link>
           )

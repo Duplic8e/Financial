@@ -394,7 +394,7 @@ export const Sheet: React.FC<SheetProps> = ({
           data-state={state}
           className={`relative z-50 w-full overflow-y-auto rounded-t-2xl border-t border-border bg-[var(--dropdown-bg)] shadow-2xl${scrollCue ? ' phone-no-scrollbar' : ''}`}
           style={{
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            paddingBottom: 'var(--safe-bottom)',
             // dvh does not shrink for the software keyboard, so a tall
             // sheet would put its lower fields behind it. The visual
             // viewport does shrink; dvh is the fallback where it is not

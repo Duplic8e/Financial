@@ -42,52 +42,25 @@ describe('App routing', () => {
   }, 20000)
 
   it('keeps the browser chrome colour in step with the active theme', async () => {
-    useThemeStore.getState().setTheme('geometric')
+    useThemeStore.getState().setTheme('light')
     render(<App />)
     const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement
     expect(meta).not.toBeNull()
-    // Geometric is the light theme; a hardcoded black bar over a white app
-    // is exactly what the manifest was doing.
-    expect(meta.content).toBe('#ffffff')
+    expect(meta.content).toBe('#f2f2f7')
 
-    await act(async () => { useThemeStore.getState().setTheme('luxury') })
+    await act(async () => { useThemeStore.getState().setTheme('dark') })
     expect((document.querySelector('meta[name="theme-color"]') as HTMLMetaElement).content).toBe('#000000')
   })
 
-  it('treats Gilded Bloom as a light theme, not a dark one', async () => {
-    useThemeStore.getState().setTheme('luxury')
-    render(<App />)
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
-
-    await act(async () => { useThemeStore.getState().setTheme('nouveau') })
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
-    expect(document.documentElement.getAttribute('data-theme')).toBe('nouveau')
-    expect((document.querySelector('meta[name="theme-color"]') as HTMLMetaElement).content).toBe('#FDF6EA')
-  })
-
-  it('pins the light or dark class for every theme, not just a sample', async () => {
-    // The dark class is now driven by LIGHT_THEMES set membership, not a
-    // per-theme comparison, so a single wrongly added or removed theme
-    // would not fail any test that only checks one or two themes. This
-    // enumerates all six so an incorrect edit to the set is caught.
+  it('pins the light or dark class and data-theme for both themes', async () => {
     render(<App />)
 
-    await act(async () => { useThemeStore.getState().setTheme('geometric') })
+    await act(async () => { useThemeStore.getState().setTheme('light') })
     expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
 
-    await act(async () => { useThemeStore.getState().setTheme('nouveau') })
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
-
-    await act(async () => { useThemeStore.getState().setTheme('tactical') })
+    await act(async () => { useThemeStore.getState().setTheme('dark') })
     expect(document.documentElement.classList.contains('dark')).toBe(true)
-
-    await act(async () => { useThemeStore.getState().setTheme('luxury') })
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
-
-    await act(async () => { useThemeStore.getState().setTheme('aurora') })
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
-
-    await act(async () => { useThemeStore.getState().setTheme('glass') })
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 })

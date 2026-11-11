@@ -69,7 +69,7 @@ for (const [name, hash] of routes) {
 // can see that pattern, and the 2026-08-28 audit found it failing on all
 // eight routes in the geometric theme. Only axe catches it, and only when
 // axe is actually pointed at each theme.
-const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau'] as const
+const THEMES = ['light', 'dark'] as const
 
 const THEME_ROUTES = [
   ['dashboard', ''],
@@ -133,7 +133,7 @@ for (const theme of THEMES) {
     // already does for the same reason.
     await seedApp(page)
     await page.addInitScript((t) => {
-      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { preference: t }, version: 2 }))
     }, theme)
 
     const found: string[] = []
@@ -168,12 +168,11 @@ const WIDE_ROUTES = [
   ...UNCOVERED_PLANNER_TOOL_IDS.map((id) => [id, `#/planner/${id}`] as const),
 ]
 
-// Scanning all 6 themes across all planner tools would roughly triple this
-// suite's e2e time. The contrast family is a theme token problem, so a fix
-// either resolves it in geometric (the theme the 2026-08-28 audit found it
-// failing in) or it does not; the other five themes already pass on the
-// core eight routes above, so only geometric needs the wide sweep.
-test('every planner tool has no serious or critical accessibility violations in the geometric theme', async ({ page }) => {
+// Scanning both themes across all planner tools would double this suite's
+// e2e time. The contrast family is a theme token problem, and the light
+// theme's tinted fills over white cards are where it has always shown up, so
+// only light gets the wide sweep.
+test('every planner tool has no serious or critical accessibility violations in the light theme', async ({ page }) => {
   // 17 routes means 17 full navigations plus axe passes in one test, more
   // than double the 8-route theme tests above. The default 30s budget is
   // fine for one of those in isolation but flakes under the same worker
@@ -182,8 +181,8 @@ test('every planner tool has no serious or critical accessibility violations in 
   test.setTimeout(90_000)
   await seedApp(page)
   await page.addInitScript((t) => {
-    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
-  }, 'geometric')
+    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { preference: t }, version: 2 }))
+  }, 'light')
 
   const found: string[] = []
   for (const [name, hash] of WIDE_ROUTES) {
@@ -192,27 +191,6 @@ test('every planner tool has no serious or critical accessibility violations in 
   expect(found).toEqual([])
 })
 
-// Deliberately does not call collectBlockingViolations: that helper injects
-// `animation: none !important` after every navigation so axe's contrast
-// readings are deterministic. Going through it here would measure a
-// stylesheet the test itself injected, not the app's own reduced-motion
-// behavior, and the test would pass no matter what src/index.css does. This
-// test does its own goto and its own assertions instead.
-test('background ornament animation stops under prefers-reduced-motion', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.addInitScript(() => {
-    window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: 'aurora' }, version: 0 }))
-  })
-  await page.goto('/')
-  await page.waitForLoadState('networkidle')
-
-  const running = await page.evaluate(() =>
-    [...document.querySelectorAll('.animate-float-1, .animate-float-2')]
-      .map((el) => getComputedStyle(el).animationPlayState)
-      .filter((s) => s === 'running'),
-  )
-  expect(running).toEqual([])
-})
 
 // Heading level is the outline a screen reader user navigates a page by, so
 // a jump from h1 straight to h3 makes that outline lie about the page's

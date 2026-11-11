@@ -837,6 +837,8 @@ test('phone sheet headers scroll away and leave room under the handle', async ({
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
   panel = page.getByTestId('sheet-panel')
   await expect(panel).toBeVisible()
+  // With every section open the sheet is taller than the screen, which is what this checks.
+  await panel.locator('details').evaluateAll((folds) => folds.forEach((d) => { (d as HTMLDetailsElement).open = true }))
   await expect(panel.getByRole('heading', { name: 'Settings', exact: true })).toBeHidden()
   await expect(panel).toHaveAttribute('aria-label', 'Settings')
   await expect.poll(() => handleGap(panel)).toBeGreaterThanOrEqual(24)
@@ -866,6 +868,8 @@ test('a scrolled phone sheet softens its top edge and keeps the handle pinned', 
   await page.locator('[data-testid="mobile-topbar"] button[aria-label="Settings"]').click()
   const panel = page.getByTestId('sheet-panel')
   await expect(panel).toBeVisible()
+  // Open every section so the sheet has something to scroll.
+  await panel.locator('details').evaluateAll((folds) => folds.forEach((d) => { (d as HTMLDetailsElement).open = true }))
   await expect(page.getByTestId('sheet-top-fade')).toHaveCount(0)
   await panel.evaluate((el) => { el.scrollTop = 200 })
   const fade = page.getByTestId('sheet-top-fade')

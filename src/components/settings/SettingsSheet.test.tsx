@@ -1,3 +1,4 @@
+import { useThemeStore } from '../../store/useThemeStore'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { SettingsSheet } from './SettingsSheet'
@@ -77,8 +78,9 @@ describe('SettingsSheet phone layout', () => {
 
   it('shows each section state on its row: theme name, key status, refunds', () => {
     useBudgetStore.setState({ refundsAndPaymentsEnabled: true })
+    useThemeStore.getState().setPreference('dark')
     render(<SettingsSheet open onClose={noop} onOpenWhatsNew={noop} onOpenDisclaimer={noop} />)
-    expect(screen.getAllByText('Luxury Dark').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Dark').length).toBeGreaterThan(1) // the row summary and the picker
     expect(screen.getByText('No Key')).toBeInTheDocument()
     expect(screen.getByText('Refunds Enabled')).toBeInTheDocument()
   })

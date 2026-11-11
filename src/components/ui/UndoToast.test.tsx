@@ -40,6 +40,7 @@ describe('UndoToast', () => {
     // The bar is 52px plus env(safe-area-inset-bottom), which is 34px on a
     // home-indicator iPhone. A fixed 96px cleared it by only 10px, and the
     // update toast's fixed 64px did not clear it at all.
-    expect(toast.className).toMatch(/safe-area-inset-bottom/)
+    // --safe-bottom is env(safe-area-inset-bottom), defined once in index.css.
+    expect(toast.className).toMatch(/var\(--safe-bottom\)/)
   })
 })

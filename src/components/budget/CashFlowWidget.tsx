@@ -170,7 +170,7 @@ export const CashFlowWidget: React.FC<{ range: MonthRange }> = ({ range }) => {
           <Sankey
             data={{ nodes, links }}
             nodePadding={isDesktop ? 24 : 34}
-            margin={isDesktop ? { top: 24, right: 110, bottom: 10, left: 100 } : { top: 18, right: 110, bottom: 12, left: 84 }}
+            margin={isDesktop ? { top: 24, right: 110, bottom: 10, left: 100 } : { top: 18, right: 110, bottom: 12, left: 92 }}
             link={renderLink(sourceLinks.length, savingsIndex)}
             node={renderNode(!isDesktop, totalIncome + totalCredits)}
           >

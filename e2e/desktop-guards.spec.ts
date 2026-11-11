@@ -144,7 +144,7 @@ test('a sheet never renders its header twice', async ({ page }, testInfo) => {
   expect(visibleHeadings).toEqual(testInfo.project.name === 'short-wide' ? [] : ['Settings'])
 })
 
-const THEMES = ['geometric', 'tactical', 'luxury', 'aurora', 'glass', 'nouveau'] as const
+const THEMES = ['light', 'dark'] as const
 
 // The routes a control might live on. Task 9's original guard only ever
 // visited /#/budget, so the Customize button on / and the two investments
@@ -154,7 +154,7 @@ const ROUTES = ['/', '/#/budget', '/#/investments'] as const
 for (const theme of THEMES) {
   test(`interactive borders reach 3:1 in the ${theme} theme`, async ({ page }) => {
     await page.addInitScript((t) => {
-      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { preference: t }, version: 2 }))
     }, theme)
 
     const failures: { label: string; tag: string; ratio: number; route: string; theme: string }[] = []
@@ -657,27 +657,18 @@ test('the Planner grid keeps one column count down the page', async ({ page }) =
   expect(allCardWidths.size).toBe(1)
 })
 
-// Gilded Bloom draws a floral up the sidebar that passes behind the settings
-// dock. The dock is only legible over it because that theme raises the dock's
-// scrim and frosts it. Both halves are theme tokens, so this also pins that
-// the other five themes are untouched.
-//
-// This lives in e2e rather than a component test because jsdom resolves
-// neither backdrop-filter nor a var() indirection in an inline style: it
-// reports both as empty, so no jsdom assertion could tell a working dock from
-// a plain transparent one.
-for (const [theme, expectBlur] of [['nouveau', true], ['luxury', false]] as const) {
-  test(`the settings dock is ${expectBlur ? 'frosted' : 'left plain'} in the ${theme} theme`, async ({ page }) => {
+// The settings dock uses the iOS translucent material in both themes. jsdom
+// resolves neither backdrop-filter nor a var() indirection in an inline
+// style, so only a real browser can confirm it.
+for (const theme of ['light', 'dark'] as const) {
+  test(`the settings dock is frosted in the ${theme} theme`, async ({ page }) => {
     await page.addInitScript((t) => {
-      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { theme: t }, version: 0 }))
+      window.localStorage.setItem('financial-dashboard-theme', JSON.stringify({ state: { preference: t }, version: 2 }))
     }, theme)
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
     const dock = await page.evaluate(() => {
-      // Reached via the sidebar's last child. The nav's own class contains a
-      // colon (`desktop:flex`) whose escaping does not survive an evaluate
-      // string, so it is found by a stable child instead.
       const brand = document.querySelector('nav a[href="#/budget"]')
       const nav = brand ? brand.closest('nav')! : null
       if (!nav) return null
@@ -687,15 +678,9 @@ for (const [theme, expectBlur] of [['nouveau', true], ['luxury', false]] as cons
     })
 
     expect(dock).not.toBeNull()
-    if (expectBlur) {
-      expect(dock!.backdrop).toContain('blur')
-      // A near transparent scrim is what made the text hard to read over the
-      // floral. Anything at or below 0.5 alpha is the defect this catches.
-      const alpha = Number(/rgba?\([^)]*?,\s*([\d.]+)\)$/.exec(dock!.bg)?.[1] ?? '1')
-      expect(alpha).toBeGreaterThan(0.5)
-    } else {
-      expect(dock!.backdrop).toBe('none')
-    }
+    expect(dock!.backdrop).toContain('blur')
+    const alpha = Number(/rgba?\([^)]*?,\s*([\d.]+)\)$/.exec(dock!.bg)?.[1] ?? '1')
+    expect(alpha).toBeGreaterThan(0.5)
   })
 }
 

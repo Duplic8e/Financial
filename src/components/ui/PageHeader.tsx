@@ -57,7 +57,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions
           <span
             aria-hidden="true"
             data-testid="topbar-title"
-            className="flex-1 min-w-0 truncate text-[17px] font-semibold text-text-primary"
+            className="flex-1 min-w-0 truncate text-[clamp(22px,7.2vw,28px)] leading-tight font-bold tracking-tight text-text-primary"
           >
             {title}
           </span>
