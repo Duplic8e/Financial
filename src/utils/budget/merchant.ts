@@ -16,7 +16,22 @@ const PROVINCES = new Set(['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON',
 const CITY_PREFIXES = new Set(['NORTH', 'EAST', 'WEST', 'SOUTH', 'NEW', 'PORT', 'SAINT', 'ST', 'STE', 'FORT', 'RICHMOND', 'NIAGARA', 'THUNDER', 'SAULT', 'GRANDE', 'RED', 'PRINCE', 'MEDICINE', 'DEEP', 'ELLIOT', 'OWEN', 'SAINTE', 'TROIS', 'QUEBEC'])
 
 /** Card-network and channel words that carry no merchant meaning. */
-const NOISE = new Set(['POS', 'PURCHASE', 'PURCH', 'DEBIT', 'VISA', 'MC', 'INTERAC', 'RETAIL', 'PREAUTH', 'PRE', 'AUTH', 'SQ', 'TST', 'SP', 'PAYPAL'])
+const NOISE = new Set([
+  'POS', 'PURCHASE', 'PURCH', 'DEBIT', 'VISA', 'MC', 'INTERAC', 'RETAIL', 'PREAUTH', 'PRE', 'AUTH', 'SQ', 'TST', 'SP', 'PAYPAL',
+  // CIBC Visa Debit and refund wording: INTL VISA DEB, IC* INSTACART, PURCHASE
+  // REVERSAL, MERCHANDISE RET REV, CORRECTION. A refund groups with the store.
+  'INTL', 'DEB', 'IC', 'REVERSAL', 'CORRECTION', 'MERCHANDISE', 'RET', 'REV', 'DEPOSIT', 'PAY',
+])
+
+/** Weekday stamps some apps add (LYFT *RIDE THU), dropped unless they lead the name (SUN SUSHI). */
+const WEEKDAYS = new Set(['MON', 'TUE', 'TUES', 'WED', 'THU', 'THUR', 'THURS', 'FRI', 'SAT', 'SUN'])
+
+/** The bank's own entries. Each is one merchant however the rest of the line
+ *  reads: SERVICE CHARGE CAPPED MONTHLY FEE, ATM WITHDRAWAL MAIN ST. */
+const BANK_ENTRIES = [
+  'ETRANSFER NETWORK FEE', 'NETWORK TRANSACTION FEE', 'SERVICE CHARGE', 'SMART INTEREST', 'BONUS INTEREST', 'INTEREST',
+  'ATM WITHDRAWAL', 'ATM DEPOSIT', 'INTERNET TRANSFER', 'ETRANSFER RECLAIM',
+]
 
 /** How many words of the cleaned description make the merchant. Three keeps
  *  SHOPPERS DRUG MART and ETRANSFER JANE DOE apart from their neighbours without
@@ -29,11 +44,21 @@ function words(description: string): string[] {
     .toUpperCase()
     // One word, so the person's name after it stays in the key.
     .replace(/\bE[-\s]?TRANSFER\b/g, ' ETRANSFER ')
+    // T&T is one name; SMITH & SONS reads as SMITH AND SONS.
+    .replace(/\b([A-Z])&([A-Z])\b/g, '$1$2')
     .replace(/&/g, ' AND ')
     // Store numbers and reference codes: #1234, CA*2K4HJ67T1, FARE/E3K7A9.
     .replace(/[A-Z]*\d[A-Z0-9]*/g, ' ')
     .replace(/[^A-Z\s]/g, ' ')
     .split(/\s+/)
+    .filter(Boolean)
+    // Initials stay together: A. B. C. GROUP is ABC GROUP, not just GROUP.
+    .reduce<{ out: string[]; initials: boolean }>((acc, w) => {
+      if (w.length === 1 && acc.initials) acc.out[acc.out.length - 1] += w
+      else acc.out.push(w)
+      acc.initials = w.length === 1 || (acc.initials && w.length === 1)
+      return acc
+    }, { out: [], initials: false }).out
     .filter((w) => w.length >= 2)
 }
 
@@ -45,6 +70,7 @@ const CHANNEL_PHRASES = [
   'POINT OF SALE', 'RETAIL PURCHASE', 'ELECTRONIC FUNDS TRANSFER', 'PREAUTHORIZED DEBIT', 'PREAUTHORIZED CREDIT',
   'PRE AUTHORIZED DEBIT', 'PRE AUTHORIZED CREDIT', 'PRE AUTHORIZED', 'INTERNET BILL PAYMENT', 'INTERNET BILL PAY',
   'INTERNET BANKING', 'BILL PAYMENT', 'VISA DEBIT PURCHASE', 'VISA DEBIT', 'INTERAC PURCHASE', 'DEBIT MEMO', 'CREDIT MEMO',
+  'BRANCH TRANSACTION', 'AUTOMATED BANKING MACHINE',
 ]
 
 function stripChannel(parts: string[]): string[] {
@@ -58,12 +84,17 @@ function stripChannel(parts: string[]): string[] {
 /** The merchant a description names, lower case, for grouping and for rules. */
 export function merchantKey(description: string): string {
   let parts = stripChannel(words(description))
-  const meaningful = parts.filter((w) => !NOISE.has(w))
+  const joined = ` ${parts.join(' ')} `
+  const bankEntry = BANK_ENTRIES.find((phrase) => joined.startsWith(` ${phrase} `))
+  if (bankEntry) return bankEntry.toLowerCase()
+  const meaningful = parts.filter((w, i) => !NOISE.has(w) && !(i > 0 && WEEKDAYS.has(w)))
   if (meaningful.length) parts = meaningful
-  // A trailing province code means the word before it is a city.
+  // A trailing province code means the word before it is a city, unless a
+  // phone or store number sits in the city's place (ABC*FOODHUB 647-689-5083, ON).
+  const numberBeforeProvince = /\d[\s,]*\b[A-Z]{2}\s*$/i.test(description.trim())
   if (parts.length > 2 && PROVINCES.has(parts[parts.length - 1])) {
     parts = parts.slice(0, -1)
-    if (parts.length > 1) parts = parts.slice(0, -1)
+    if (parts.length > 1 && !numberBeforeProvince) parts = parts.slice(0, -1)
     if (parts.length > 1 && CITY_PREFIXES.has(parts[parts.length - 1])) parts = parts.slice(0, -1)
   }
   const key = parts.slice(0, MAX_WORDS).join(' ').toLowerCase().trim()

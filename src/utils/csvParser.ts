@@ -191,6 +191,38 @@ export const PARSERS: BankParserConfig[] = [
     }
   },
   {
+    name: 'CIBC Bank Account (Headerless)',
+    // CIBC chequing and savings downloads: Date, Description, Debit, Credit,
+    // with no header row and no account number.
+    detect: (_headers, firstRow) => Array.isArray(firstRow) && firstRow.length === 4 &&
+      /^\d{4}-\d{2}-\d{2}$/.test(firstRow[0].trim()) &&
+      (firstRow[2].trim() === '') !== (firstRow[3].trim() === ''),
+    parse: (row) => {
+      if (!Array.isArray(row) || row.length !== 4) throw new Error('Expected four columns');
+      const [date, description, debit, credit] = row.map(value => value.trim());
+      const parsedDate = new Date(`${date}T00:00:00Z`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(parsedDate.getTime()) ||
+          parsedDate.toISOString().slice(0, 10) !== date) throw new Error('Invalid date');
+      if (!description) throw new Error('Missing description');
+      if (Boolean(debit) === Boolean(credit)) throw new Error('Expected exactly one debit or credit amount');
+      const amountText = debit || credit;
+      const amount = Number(amountText);
+      if (!/^\d+(?:\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount)) throw new Error('Invalid amount');
+      const originalRowData = Object.fromEntries(row.map((value, i) => [String(i), value]));
+      const text = description.replace(/\s+/g, ' ');
+      // Money moved between your own accounts, or to your credit card, is not
+      // spending or income: both sides of it are in your other downloads.
+      if (/\bINTERNET TRANSFER\b/i.test(text)) {
+        return { date, description, amount, type: debit ? 'expense' : 'income', flag: 'card-payment', originalRowData };
+      }
+      // A refund, reversal or correction gives money back to that store's spending.
+      if (credit && /\b(?:REVERSAL|RET REV|CORRECTION|REFUND)\b/i.test(text)) {
+        return { date, description, amount: -amount, type: 'expense', originalRowData };
+      }
+      return { date, description, amount, type: debit ? 'expense' : 'income', originalRowData };
+    },
+  },
+  {
     name: 'Standard Ledger CSV',
     detect: (headers) => headers.includes('Date') && headers.includes('Amount') && headers.includes('Description'),
     parse: (row) => {
@@ -238,7 +270,7 @@ export async function parseCSV(file: File): Promise<TriageTransaction[] | Unreco
           return;
         }
 
-        if (parser.name === 'CIBC Credit Card (Headerless)' && results.errors.length) {
+        if ((parser.name === 'CIBC Credit Card (Headerless)' || parser.name === 'CIBC Bank Account (Headerless)') && results.errors.length) {
           reject(new Error('Invalid CIBC CSV: check the quoted fields and column separators.'));
           return;
         }

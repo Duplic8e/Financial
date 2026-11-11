@@ -158,3 +158,50 @@ describe('Chase Credit Card parser rows', () => {
     expect(chase().parse(row({ Amount: '' }))).toBeNull()
   })
 })
+
+// Made-up rows in the shape of a CIBC chequing or savings download: Date,
+// Description, Debit, Credit, no header row and no account number.
+describe('CIBC chequing and savings import', () => {
+  const file = (lines: string[]) => new File([lines.join('\n')], 'cibc.csv')
+  const sample = [
+    '2026-11-09,Point of Sale - Interac RETAIL PURCHASE 000000000001 COSTCO WHOLESAL,50.10,',
+    '2026-11-03,Electronic Funds Transfer DEPOSIT PAYPAL,,25.89',
+    '2026-11-01,Internet Banking INTERNET TRANSFER 000000000002 TO CARD 4500********0000,300.00,',
+    '2026-10-30,Branch Transaction INTEREST,,0.01',
+    '2026-10-28,Point of Sale - Visa Debit VISA DEBIT PURCHASE REVERSAL AMAZON* 5AB1CD2 000000000003,,19.99',
+    '2026-10-27,Internet Banking INTERNET TRANSFER 000000000004 FROM ACCOUNT 00000/****000,,8000.00',
+  ]
+
+  it('is recognized and reads every row', async () => {
+    const rows = await parseCSV(file(sample))
+    expect(Array.isArray(rows) && rows.length).toBe(6)
+  })
+
+  it('reads a debit as spending and a credit as income', async () => {
+    const rows = (await parseCSV(file(sample))) as Awaited<ReturnType<typeof parseCSV>> & Array<{ description: string; amount: number; type: string; flag?: string }>
+    expect(rows[0]).toMatchObject({ date: '2026-11-09', amount: 50.1, type: 'expense' })
+    expect(rows[1]).toMatchObject({ amount: 25.89, type: 'income' })
+    expect(rows[3]).toMatchObject({ amount: 0.01, type: 'income' })
+    expect(rows[0].flag).toBeUndefined()
+  })
+
+  it('sets transfers between your own accounts aside, both directions', async () => {
+    const rows = (await parseCSV(file(sample))) as Array<{ amount: number; type: string; flag?: string }>
+    expect(rows[2]).toMatchObject({ amount: 300, type: 'expense', flag: 'card-payment' })
+    expect(rows[5]).toMatchObject({ amount: 8000, type: 'income', flag: 'card-payment' })
+  })
+
+  it('reads a reversal as money back on that store, not income', async () => {
+    const rows = (await parseCSV(file(sample))) as Array<{ amount: number; type: string }>
+    expect(rows[4]).toMatchObject({ amount: -19.99, type: 'expense' })
+  })
+
+  it('still leaves the credit card five-column shape to its own parser', async () => {
+    const rows = (await parseCSV(new File(['2026-11-09,"COFFEE #1 TORONTO, ON",2.10,,4500********0000'], 'cc.csv'))) as Array<{ bankSource?: { name: string } }>
+    expect(rows[0].bankSource?.name).toBe('CIBC card 0000')
+  })
+
+  it('rejects a row with both a debit and a credit', async () => {
+    await expect(parseCSV(file([sample[0], '2026-11-09,SHOP,1.00,2.00']))).rejects.toThrow(/CIBC Bank Account.*row 2/)
+  })
+})
