@@ -61,7 +61,8 @@ async function noOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 }
 async function tabTo(page: Page, target: Locator) {
-  for (let i = 0; i < 150; i++) {
+  // Desktop Setup lists every category with its own controls before the rules.
+  for (let i = 0; i < 250; i++) {
     if (await target.evaluate(el => el === document.activeElement)) return
     await page.keyboard.press('Tab')
   }
@@ -241,6 +242,9 @@ for (const [width, height] of [[320, 700], [375, 812], [932, 430]]) {
     await page.keyboard.press('Space')
     await expect(page.locator('#excluded-imports')).not.toHaveAttribute('open', '')
     await page.keyboard.press('Space')
+    await page.keyboard.press('Tab')
+    // Restore All comes first, then each entry's own Restore.
+    await expect(page.getByRole('button', { name: /^Restore All \(\d+\)$/ })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'Restore Savings to review', exact: true })).toBeFocused()
     await page.keyboard.press('Enter')

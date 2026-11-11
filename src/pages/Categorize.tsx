@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronLeft, ListChecks } from 'lucide-react'
+import { Check, ChevronLeft, ListChecks, Plus } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader'
 import { useTriageStore } from '../store/useTriageStore'
 import { useBudgetStore } from '../store/useBudgetStore'
@@ -8,12 +8,14 @@ import { useUndoStore } from '../store/useUndoStore'
 import { captureTriageUndo } from '../utils/budget/triageUndo'
 import { buildMerchantGroups, isQueueRow, monthsBefore, type MerchantGroup } from '../utils/budget/categorizeQueue'
 import { formatMoneyWithCents } from '../components/planner/format'
+import { NewCategorySheet } from '../components/budget/CategoryEditSheets'
 import type { Category, CategoryGroup } from '../types/budget'
 import type { TriageTransaction } from '../types/triage'
 
 type Window = '3m' | 'all'
 
 const IGNORE = '__not-spending__'
+const NEW_CATEGORY = '__new-category__'
 
 function localToday(): string {
   const now = new Date()
@@ -25,7 +27,8 @@ function shortDate(iso: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: y === new Date().getFullYear() ? undefined : 'numeric' })
 }
 
-/** Native select, grouped by category group, so an iPhone shows its own wheel picker. */
+/** Native select, grouped by category group, so an iPhone shows its own wheel
+ *  picker, with an Add button beside it for a category that does not exist yet. */
 const CategorySelect: React.FC<{
   type: 'income' | 'expense'
   label: string
@@ -33,28 +36,44 @@ const CategorySelect: React.FC<{
   groups: Record<string, CategoryGroup>
   value?: string
   onChoose: (categoryId: string) => void
+  onNew: () => void
   allowIgnore?: boolean
-}> = ({ type, label, categories, groups, value, onChoose, allowIgnore }) => {
+}> = ({ type, label, categories, groups, value, onChoose, onNew, allowIgnore }) => {
   const byGroup = Object.values(groups)
     .filter((g) => g.kind === type)
     .map((g) => ({ group: g, items: Object.values(categories).filter((c) => c.groupId === g.id).sort((a, b) => a.name.localeCompare(b.name)) }))
     .filter((g) => g.items.length > 0)
   return (
-    <select
-      aria-label={label}
-      value=""
-      onChange={(e) => { if (e.target.value) onChoose(e.target.value) }}
-      className="w-full min-h-[44px] rounded-[10px] px-3 bg-[color-mix(in_srgb,var(--text-secondary)_14%,transparent)] text-[16px] font-medium text-accent appearance-none"
-    >
-      <option value="" disabled>{value && categories[value] ? `Suggested: ${categories[value].name}` : 'Choose a category…'}</option>
-      {value && categories[value] && <option value={value}>✓ {categories[value].name}</option>}
-      {byGroup.map(({ group, items }) => (
-        <optgroup key={group.id} label={group.name}>
-          {items.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </optgroup>
-      ))}
-      {allowIgnore && <option value={IGNORE}>Not spending (transfer, payment…)</option>}
-    </select>
+    <div className="flex gap-2">
+      <select
+        aria-label={label}
+        value=""
+        onChange={(e) => {
+          const choice = e.target.value
+          if (choice === NEW_CATEGORY) onNew()
+          else if (choice) onChoose(choice)
+        }}
+        className="flex-1 min-w-0 min-h-[44px] rounded-[10px] px-3 bg-[color-mix(in_srgb,var(--text-secondary)_14%,transparent)] text-[16px] font-medium text-accent appearance-none"
+      >
+        <option value="" disabled>{value && categories[value] ? `Suggested: ${categories[value].name}` : byGroup.length ? 'Choose a category…' : 'No categories yet'}</option>
+        {value && categories[value] && <option value={value}>✓ {categories[value].name}</option>}
+        {byGroup.map(({ group, items }) => (
+          <optgroup key={group.id} label={group.name}>
+            {items.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </optgroup>
+        ))}
+        <option value={NEW_CATEGORY}>+ New category…</option>
+        {allowIgnore && <option value={IGNORE}>Not spending (transfer, payment…)</option>}
+      </select>
+      <button
+        type="button"
+        onClick={onNew}
+        aria-label={`New category for ${label.replace(/^Category for /, '')}`}
+        className="shrink-0 w-11 min-h-[44px] rounded-[10px] flex items-center justify-center bg-[color-mix(in_srgb,var(--text-secondary)_14%,transparent)] text-accent"
+      >
+        <Plus className="w-5 h-5" aria-hidden="true" />
+      </button>
+    </div>
   )
 }
 
@@ -69,6 +88,8 @@ export const Categorize: React.FC = () => {
   const [windowChoice, setWindowChoice] = useState<Window>('3m')
   const [open, setOpen] = useState<string | null>(null)
   const [filedThisVisit, setFiledThisVisit] = useState(0)
+  /** The rows a new category is being made for; they are filed into it on save. */
+  const [creating, setCreating] = useState<{ kind: 'income' | 'expense'; apply: (categoryId: string) => void } | null>(null)
 
   const pending = useMemo(() => Object.values(pendingTransactions), [pendingTransactions])
   const since = windowChoice === '3m' ? monthsBefore(localToday(), 3) : undefined
@@ -76,6 +97,7 @@ export const Categorize: React.FC = () => {
   const queueTotal = pending.filter(isQueueRow).length
   const inWindow = groups.reduce((n, g) => n + g.count, 0)
   const needsLook = pending.length - queueTotal
+  const setAside = pending.filter((tx) => tx.flag && !tx.duplicate).length
   const hasCategories = Object.keys(categories).length > 0
 
   /** Files rows and offers one undo that also forgets the rule it learned. */
@@ -88,7 +110,7 @@ export const Categorize: React.FC = () => {
     if (!added.length) return
     setFiledThisVisit((n) => n + added.length)
     const extra = added.length - ids.filter((id) => added.includes(id)).length
-    const label = `Filed ${what} as ${categories[categoryId]?.name ?? 'that category'}${extra > 0 ? `, plus ${extra} more from the same store` : ''}`
+    const label = `Filed ${what} as ${useBudgetStore.getState().categories[categoryId]?.name ?? 'that category'}${extra > 0 ? `, plus ${extra} more from the same store` : ''}`
     offer(label)
     const restore = useUndoStore.getState().pending!.undo
     useUndoStore.getState().offerUndo(label, () => {
@@ -160,16 +182,37 @@ export const Categorize: React.FC = () => {
 
       {!hasCategories && (
         <section className="themed-card p-4">
-          <p className="text-[15px]">You have no categories yet.</p>
-          <Link to="/budget?tab=setup" className="text-[15px] font-semibold text-accent">Create them in Budgeting → Setup</Link>
+          <p className="text-[15px]">You have no categories yet. Tap <span className="font-semibold">+</span> beside any store to make one as you go, or set them all up in <Link to="/budget?tab=setup" className="font-semibold text-accent">Budgeting → Setup</Link>.</p>
         </section>
       )}
 
       {needsLook > 0 && (
-        <Link to="/budget?tab=transactions" className="themed-card p-4 text-[15px] flex items-center justify-between gap-3">
-          <span><span className="font-semibold">{needsLook}</span> {needsLook === 1 ? 'needs' : 'need'} a closer look (possible duplicates or card payments)</span>
-          <span className="text-accent font-semibold shrink-0">Review</span>
-        </Link>
+        <section className="themed-card p-4 flex flex-col gap-3 text-[15px]">
+          <p>
+            <span className="font-semibold">{needsLook}</span> {needsLook === 1 ? 'is' : 'are'} set aside
+            {setAside > 0 ? ` (${setAside} transfer${setAside === 1 ? '' : 's'} or card payment${setAside === 1 ? '' : 's'}` : ' ('}
+            {needsLook - setAside > 0 ? `${setAside > 0 ? ', ' : ''}${needsLook - setAside} possible duplicate${needsLook - setAside === 1 ? '' : 's'}` : ''}).
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {setAside > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const ids = pending.filter((tx) => tx.flag && !tx.duplicate).map((tx) => tx.id)
+                  const offer = captureTriageUndo({ pendingIds: ids })
+                  const moved = useTriageStore.getState().includeSetAside()
+                  if (moved.length) offer(`Moved ${moved.length} set-aside transaction${moved.length === 1 ? '' : 's'} into Categorize`)
+                }}
+                className="min-h-[44px] px-4 rounded-[10px] bg-accent text-bg-primary font-semibold"
+              >
+                Categorize them too
+              </button>
+            )}
+            <Link to="/budget?tab=transactions" className="min-h-[44px] px-4 rounded-[10px] inline-flex items-center bg-[color-mix(in_srgb,var(--text-secondary)_14%,transparent)] text-accent font-semibold">
+              Review in Transactions
+            </Link>
+          </div>
+        </section>
       )}
 
       {queueTotal === 0 ? (
@@ -182,7 +225,7 @@ export const Categorize: React.FC = () => {
         <section className="themed-card p-6 text-center">
           <p className="text-[17px] font-semibold">Nothing left in the last 3 months</p>
           <p className="text-[15px] text-text-secondary mt-1">{queueTotal} older transaction{queueTotal === 1 ? '' : 's'} still wait.</p>
-          <button type="button" onClick={() => setWindowChoice('all')} className="mt-3 min-h-[44px] px-4 rounded-[10px] bg-accent text-white font-semibold">Show all</button>
+          <button type="button" onClick={() => setWindowChoice('all')} className="mt-3 min-h-[44px] px-4 rounded-[10px] bg-accent text-bg-primary font-semibold">Show all</button>
         </section>
       ) : (
         <>
@@ -202,18 +245,17 @@ export const Categorize: React.FC = () => {
                   <p className={`text-[17px] font-semibold shrink-0 ${group.type === 'income' ? 'text-success' : ''}`}>{group.type === 'income' ? '+' : ''}{formatMoneyWithCents(group.total)}</p>
                 </div>
                 <p className="text-[12px] text-text-secondary break-words -mt-1 line-clamp-2">{group.samples.slice(0, 2).join(' · ')}</p>
-                {hasCategories && (
-                  <CategorySelect
-                    type={group.type}
-                    label={`Category for ${group.label}`}
-                    categories={categories}
-                    groups={categoryGroups}
-                    value={group.suggestedCategoryId}
-                    onChoose={(value) => chooseForGroup(group, value)}
-                    allowIgnore
-                  />
-                )}
-                {group.count > 1 && hasCategories && (
+                <CategorySelect
+                  type={group.type}
+                  label={`Category for ${group.label}`}
+                  categories={categories}
+                  groups={categoryGroups}
+                  value={group.suggestedCategoryId}
+                  onChoose={(value) => chooseForGroup(group, value)}
+                  onNew={() => setCreating({ kind: group.type, apply: (id) => chooseForGroup(group, id) })}
+                  allowIgnore
+                />
+                {group.count > 1 && (
                   <button
                     type="button"
                     aria-expanded={open === group.id}
@@ -243,6 +285,7 @@ export const Categorize: React.FC = () => {
                             groups={categoryGroups}
                             value={tx.categoryId}
                             onChoose={(value) => chooseForRow(tx, value)}
+                            onNew={() => setCreating({ kind: tx.type, apply: (id) => chooseForRow(tx, id) })}
                             allowIgnore
                           />
                         </li>
@@ -254,6 +297,12 @@ export const Categorize: React.FC = () => {
           </ul>
         </>
       )}
+      <NewCategorySheet
+        open={creating !== null}
+        kind={creating?.kind ?? 'expense'}
+        onClose={() => setCreating(null)}
+        onCreated={(id) => creating?.apply(id)}
+      />
     </div>
   )
 }

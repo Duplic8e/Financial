@@ -32,6 +32,11 @@ interface TriageState {
   bindImportSource: (sourceId: string, bankKey: string) => void;
   importTransactions: (rows: TriageTransaction[], sourceId: string) => ImportReport;
   restoreImportRecord: (id: string) => void;
+  /** Sends every excluded or ignored import back to review. Returns their ids. */
+  restoreAllExcluded: () => string[];
+  /** Moves rows set aside as transfers or card payments into the Categorize
+   *  queue, where they can be filed or left out like anything else. */
+  includeSetAside: () => string[];
   resolveDuplicate: (id: string) => void;
   
   addPending: (transactions: TriageTransaction[]) => void;
@@ -262,6 +267,39 @@ export const useTriageStore = create<TriageState>()(
           importRecords: { ...state.importRecords, [id]: { ...record, decision: 'pending',
             exclusionOverride: 'include', exclusionMatches: undefined, ignoreReason: undefined,
             matchedRecordId: undefined, matchedTransactionId: undefined } } });
+      },
+
+      restoreAllExcluded: () => {
+        const ids = Object.values(get().importRecords).filter((record) => record.decision === 'ignored').map((record) => record.id);
+        if (!ids.length) return [];
+        useUndoStore.getState().dismissUndo();
+        // One write for the whole batch, the same shape restoreImportRecord writes.
+        set((state) => {
+          const pendingTransactions = { ...state.pendingTransactions };
+          const importRecords = { ...state.importRecords };
+          for (const id of ids) {
+            const record = importRecords[id];
+            pendingTransactions[id] = { ...record.original, id, importRecordId: id, importSourceId: record.sourceId, exclusionMatches: undefined,
+              duplicate: record.matchedRecordId || record.matchedTransactionId ? 'possible' : undefined,
+              duplicateRecordId: record.matchedRecordId, duplicateTransactionId: record.matchedTransactionId };
+            importRecords[id] = { ...record, decision: 'pending', exclusionOverride: 'include', exclusionMatches: undefined,
+              ignoreReason: undefined, matchedRecordId: undefined, matchedTransactionId: undefined };
+          }
+          return { pendingTransactions, importRecords };
+        });
+        return ids;
+      },
+
+      includeSetAside: () => {
+        const ids = Object.values(get().pendingTransactions).filter((tx) => tx.flag && !tx.duplicate).map((tx) => tx.id);
+        if (!ids.length) return [];
+        useUndoStore.getState().dismissUndo();
+        set((state) => {
+          const pendingTransactions = { ...state.pendingTransactions };
+          for (const id of ids) pendingTransactions[id] = { ...pendingTransactions[id], flag: undefined };
+          return { pendingTransactions };
+        });
+        return ids;
       },
 
       resolveDuplicate: (id) => {

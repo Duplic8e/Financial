@@ -40,6 +40,22 @@ describe('BudgetSetupMobile', () => {
     expect(Object.values(useBudgetStore.getState().categories).some((c) => c.name === 'Dining Out' && c.groupId === 'g1')).toBe(true)
   })
 
+  it('renames a category and a group', async () => {
+    open('Categories')
+    fireEvent.click(screen.getByRole('button', { name: 'Rename category Groceries' }))
+    let sheet = await screen.findByRole('dialog', { name: 'Rename category' })
+    fireEvent.change(within(sheet).getByLabelText('Category name'), { target: { value: 'Supermarket' } })
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
+    expect(useBudgetStore.getState().categories.c1.name).toBe('Supermarket')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename group Food' }))
+    sheet = await screen.findByRole('dialog', { name: 'Rename group' })
+    expect(within(sheet).getByRole('button', { name: 'Save' })).toBeDisabled() // unchanged name
+    fireEvent.change(within(sheet).getByLabelText('Group name'), { target: { value: 'Food & Dining' } })
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
+    expect(useBudgetStore.getState().categoryGroups.g1.name).toBe('Food & Dining')
+  })
+
   it('adds a group', () => {
     open('Categories')
     fireEvent.click(screen.getByRole('button', { name: 'Add Group' }))

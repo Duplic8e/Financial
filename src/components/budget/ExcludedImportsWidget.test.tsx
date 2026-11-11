@@ -82,3 +82,21 @@ it('focuses the restored inbox entry', async () => {
   fireEvent.click(screen.getByRole('button', {name:'Restore PAYMENT to review'}))
   await waitFor(() => expect(document.getElementById('import-review-a')).toHaveFocus())
 })
+
+it('restores every excluded import at once, with undo', () => {
+  const store = useTriageStore.getState()
+  const sourceId = store.createImportSource('Card B')
+  store.importTransactions([
+    { id: 'p1', date: '2026-06-10', amount: 5, description: 'ONE', type: 'expense' },
+    { id: 'p2', date: '2026-06-11', amount: 6, description: 'TWO', type: 'expense' },
+  ], sourceId)
+  store.rejectTransaction('p1')
+  store.rejectTransaction('p2')
+  render(<ExcludedImportsWidget />)
+  fireEvent.click(screen.getByRole('button', { name: 'Restore All (2)' }))
+  expect(Object.keys(useTriageStore.getState().pendingTransactions).sort()).toEqual(['p1', 'p2'])
+  expect(useUndoStore.getState().pending?.label).toBe('Restored 2 transactions to review')
+  useUndoStore.getState().pending!.undo()
+  expect(useTriageStore.getState().pendingTransactions).toEqual({})
+  expect(useTriageStore.getState().importRecords.p1.decision).toBe('ignored')
+})

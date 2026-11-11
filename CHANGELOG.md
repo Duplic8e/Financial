@@ -7,6 +7,10 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Added
+- Restore All on Excluded Imports sends every excluded or ignored entry back to review at once, with Undo.
+- On the Categorize page, Categorize Them Too moves transfers and card payments that were set aside into the queue, where they can be filed or marked Not Spending like any other store.
+- Make a category while you categorize: the + beside each store (or + New Category in its picker) opens a sheet for the name and its group, existing or new, and files the store into it straight away.
+- Rename categories and groups: the pencil beside each one in Setup → Categories on a phone, and beside each group on desktop.
 - A Categorize page (Budgeting → "to categorize" → Start). Imported transactions are grouped by store, newest first, with a Last 3 Months or All switch. Pick a category once for a store and every transaction from it is filed, including older ones still waiting, and Ledger remembers the store, so later imports from it go straight into your budget. Pick One by One files a single transaction without teaching the store (for a store like Amazon), Not Spending leaves a transfer or payment out, and Undo takes back the whole choice, rule included.
 - Learned rules now match the store, not the exact bank text: LOBLAWS #1234 TORONTO ON and LOBLAWS #5678 NORTH YORK ON are both Loblaws, and CIBC chequing prefixes such as "Point of Sale - Interac RETAIL PURCHASE" are ignored.
 - The import summary says how many transactions were filed automatically.

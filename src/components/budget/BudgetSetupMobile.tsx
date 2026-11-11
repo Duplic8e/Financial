@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Plus, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useBudgetStore, getMonthlyBudgetStats } from '../../store/useBudgetStore';
 import { totalMonthlyBudget } from '../../store/budgetSelectors';
 import { useUndoStore } from '../../store/useUndoStore';
@@ -15,6 +15,7 @@ import { NumberInput } from '../ui/NumberInput';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Sheet } from '../ui/Sheet';
+import { RenameSheet } from './CategoryEditSheets';
 import { CategorizationRulesWidget } from './CategorizationRulesWidget';
 import { ExclusionRulesWidget } from './ExclusionRulesWidget';
 import { ReallocationHistory } from './ReallocationHistory';
@@ -59,6 +60,7 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
   const [coverTarget, setCoverTarget] = useState<{ id: string; overage: number } | null>(null);
   const [paradigmInfoOpen, setParadigmInfoOpen] = useState(false);
   const [removing, setRemoving] = useState<{ kind: 'category' | 'group'; id: string } | null>(null);
+  const [renaming, setRenaming] = useState<{ kind: 'category' | 'group'; id: string; name: string } | null>(null);
 
   const [year, month] = selectedMonth.split('-').map(Number);
   const stats = getMonthlyBudgetStats(state, year, month - 1);
@@ -232,6 +234,9 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
         <Card key={group.id}>
           <div className="flex items-center gap-2 pl-3.5 pr-1 min-h-[48px] border-b border-border">
             <span className="flex-1">{group.name}</span>
+            <button type="button" aria-label={`Rename group ${group.name}`} onClick={() => setRenaming({ kind: 'group', id: group.id, name: group.name })} className={iconBtn}>
+              <Pencil size={16} aria-hidden="true" />
+            </button>
             {rows.length === 0 ? (
               <>
                 <Pill>{rows.length}</Pill>
@@ -246,6 +251,9 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
           {rows.map(({ cat }) => (
             <div key={cat.id} className="flex items-center gap-2 pl-3.5 pr-1 min-h-[56px] border-b border-border">
               <span className="flex-1 truncate text-[14px]">{cat.name}</span>
+              <button type="button" aria-label={`Rename category ${cat.name}`} onClick={() => setRenaming({ kind: 'category', id: cat.id, name: cat.name })} className={iconBtn}>
+                <Pencil size={16} aria-hidden="true" />
+              </button>
               <button type="button" aria-label={`Remove category ${cat.name}`} onClick={() => setRemoving({ kind: 'category', id: cat.id })} className={iconBtn}>
                 <Trash2 size={17} aria-hidden="true" />
               </button>
@@ -302,6 +310,17 @@ export const BudgetSetupMobile: React.FC<Props> = ({ selectedMonth }) => {
           ))}
         </div>
       </Sheet>
+      <RenameSheet
+        open={renaming !== null}
+        what={renaming?.kind ?? 'category'}
+        current={renaming?.name ?? ''}
+        onClose={() => setRenaming(null)}
+        onSave={(name) => {
+          if (!renaming) return;
+          if (renaming.kind === 'group') state.updateCategoryGroup(renaming.id, { name });
+          else state.updateCategory(renaming.id, { name });
+        }}
+      />
       <ConfirmDialog
         open={removing !== null}
         title={removing?.kind === 'group' ? 'Remove Group?' : 'Remove Category?'}

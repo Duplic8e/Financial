@@ -89,3 +89,31 @@ describe('later imports', () => {
     expect(budgetWrites).toBe(1)
   })
 })
+
+describe('bringing set-aside and excluded rows back', () => {
+  it('restores every excluded import to review in one go', () => {
+    useTriageStore.setState({ importSources: { cibc: { id: 'cibc', name: 'Chequing' } } })
+    useTriageStore.getState().importTransactions([
+      row('x1', 'SHOP ONE', '2026-11-01'),
+      row('x2', 'SHOP TWO', '2026-11-02'),
+      row('x3', 'SHOP THREE', '2026-11-03'),
+    ], 'cibc')
+    useTriageStore.getState().rejectTransaction('x1')
+    useTriageStore.getState().rejectTransaction('x2')
+    expect(Object.keys(useTriageStore.getState().pendingTransactions)).toEqual(['x3'])
+    expect(useTriageStore.getState().restoreAllExcluded().sort()).toEqual(['x1', 'x2'])
+    expect(Object.keys(useTriageStore.getState().pendingTransactions).sort()).toEqual(['x1', 'x2', 'x3'])
+    expect(useTriageStore.getState().importRecords.x1.decision).toBe('pending')
+    expect(useTriageStore.getState().restoreAllExcluded()).toEqual([])
+  })
+
+  it('moves set-aside transfers into the queue but leaves possible duplicates', () => {
+    useTriageStore.getState().addPending([
+      row('t', 'INTERNET TRANSFER 1', '2026-11-01', 100, { flag: 'card-payment' }),
+      row('d', 'SHOP', '2026-11-01', 5, { flag: 'card-payment', duplicate: 'possible' }),
+    ])
+    expect(useTriageStore.getState().includeSetAside()).toEqual(['t'])
+    expect(useTriageStore.getState().pendingTransactions.t.flag).toBeUndefined()
+    expect(useTriageStore.getState().pendingTransactions.d.flag).toBe('card-payment')
+  })
+})

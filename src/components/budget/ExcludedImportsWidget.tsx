@@ -28,11 +28,20 @@ export function ExcludedImportsWidget({ focusRequest = 0 }: { focusRequest?: num
     setAnnouncement(`${records[id].original.description} restored to review`)
     requestAnimationFrame(() => document.getElementById(`import-review-${id}`)?.focus())
   }
+  const restoreAll = () => {
+    const ids = excluded.map(record => record.id)
+    const offer = captureTriageUndo({ pendingIds: ids, recordIds: ids })
+    const restored = useTriageStore.getState().restoreAllExcluded()
+    if (!restored.length) return
+    offer(`Restored ${restored.length} transaction${restored.length === 1 ? '' : 's'} to review`)
+    setAnnouncement(`${restored.length} transactions restored to review`)
+  }
   return <>
     <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
     {hasExcluded && <details id={EXCLUDED_IMPORTS_ID} ref={detailsRef} className="group min-w-0 rounded-lg border border-border bg-bg-secondary p-3">
       <summary ref={summaryRef} tabIndex={0} className="min-h-11 flex items-center gap-2 list-none cursor-pointer text-[14px] font-medium text-text-primary"><ChevronRight size={16} aria-hidden="true" className="transition-transform group-open:rotate-90" />Excluded imports ({excluded.length})</summary>
       <p className="text-[13px] text-text-secondary mb-3">Excluded and ignored bank entries stay in your import history. Restore sends an entry back to review.</p>
+      <button onClick={restoreAll} className="min-h-11 px-4 mb-3 rounded-md bg-accent text-bg-primary text-[14px] font-semibold">Restore All ({excluded.length})</button>
       <ul className="space-y-2 min-w-0">
         {excluded.slice(0, limit).map(record => <li key={record.id} className="min-w-0 rounded-md border border-border p-3 flex flex-col gap-2">
           <div className="min-w-0 break-words">

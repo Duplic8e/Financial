@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBudgetStore, getMonthlyBudgetStats } from '../../store/useBudgetStore';
-import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { RenameSheet } from './CategoryEditSheets';
 import { ThemedSelect } from '../ui/ThemedSelect';
 import { NumberInput } from '../ui/NumberInput';
 import { ReallocationModal } from './ReallocationModal';
@@ -48,6 +49,7 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
   const [newCatName, setNewCatName] = useState('');
   const [newCatGroupId, setNewCatGroupId] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
+  const [renamingGroup, setRenamingGroup] = useState<{ id: string; name: string } | null>(null);
   const [newGroupKind, setNewGroupKind] = useState<'income' | 'expense'>('expense');
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -175,6 +177,15 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
                   <span className="text-[12px] font-medium text-text-secondary bg-bg-secondary px-2 rounded-full border border-border">
                     {isIncomeGroup ? `$${groupEarned.toFixed(0)} earned` : `$${groupTotal.toFixed(0)}`}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setRenamingGroup({ id: group.id, name: group.name })}
+                    className="p-1 text-text-secondary hover:text-accent transition-colors"
+                    title="Rename group"
+                    aria-label={`Rename group ${group.name}`}
+                  >
+                    <Pencil size={13} />
+                  </button>
                   {paradigm === '50/30/20' && !isIncomeGroup && (
                     <div className="flex items-center gap-1">
                       {BUDGET_CLASSES.map((cls) => (
@@ -422,6 +433,13 @@ export const CategoryManagerWidget: React.FC<CategoryManagerWidgetProps> = ({ se
       </div>
       </div>
 
+      <RenameSheet
+        open={renamingGroup !== null}
+        what="group"
+        current={renamingGroup?.name ?? ''}
+        onClose={() => setRenamingGroup(null)}
+        onSave={(name) => { if (renamingGroup) updateCategoryGroup(renamingGroup.id, { name }) }}
+      />
       {coverTarget && (
         <ReallocationModal
           isOpen

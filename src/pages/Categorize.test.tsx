@@ -67,3 +67,39 @@ it('says when everything is done', () => {
   page()
   expect(screen.getByText('All caught up')).toBeInTheDocument()
 })
+
+it('makes a new category and group on the spot and files the store into it', async () => {
+  page()
+  fireEvent.click(screen.getByRole('button', { name: 'New category for Tim Hortons' }))
+  const sheet = await screen.findByRole('dialog', { name: 'New category' })
+  fireEvent.change(within(sheet).getByLabelText('Category name'), { target: { value: 'Coffee' } })
+  fireEvent.change(within(sheet).getByLabelText('Group'), { target: { value: '__new-group__' } })
+  expect(within(sheet).getByRole('button', { name: 'Add Category' })).toBeDisabled()
+  fireEvent.change(within(sheet).getByLabelText('New group name'), { target: { value: 'Treats' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Add Category' }))
+
+  const budget = useBudgetStore.getState()
+  const coffee = Object.values(budget.categories).find((c) => c.name === 'Coffee')!
+  expect(budget.categoryGroups[coffee.groupId]).toMatchObject({ name: 'Treats', kind: 'expense' })
+  expect(budget.transactions.c.categoryId).toBe(coffee.id)
+  expect(useTriageStore.getState().categoryRules['tim hortons']).toBe(coffee.id)
+})
+
+it('offers New category from the picker too, into an existing group', async () => {
+  page()
+  fireEvent.change(screen.getByLabelText('Category for Loblaws'), { target: { value: '__new-category__' } })
+  const sheet = await screen.findByRole('dialog', { name: 'New category' })
+  expect(within(sheet).getByLabelText('Group')).toHaveValue('food')
+  fireEvent.change(within(sheet).getByLabelText('Category name'), { target: { value: 'Bulk Food' } })
+  fireEvent.click(within(sheet).getByRole('button', { name: 'Add Category' }))
+  const bulk = Object.values(useBudgetStore.getState().categories).find((c) => c.name === 'Bulk Food')!
+  expect(bulk.groupId).toBe('food')
+  expect(useBudgetStore.getState().transactions.a.categoryId).toBe(bulk.id)
+})
+
+it('moves set-aside transfers into the queue on request', () => {
+  useTriageStore.getState().addPending([{ id: 't', date: iso(3), description: 'INTERNET TRANSFER 000000000001', amount: 300, type: 'expense', flag: 'card-payment' }])
+  page()
+  fireEvent.click(screen.getByRole('button', { name: 'Categorize them too' }))
+  expect(screen.getByLabelText('Category for Internet Transfer')).toBeInTheDocument()
+})
