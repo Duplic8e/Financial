@@ -416,5 +416,5 @@ it.each(['income', 'expense'] as const)('requires deliberate category review of 
   expect(screen.getByRole('button', { name: 'Keep both' })).toBeEnabled()
   fireEvent.click(screen.getByRole('button', { name: 'Keep both' }))
   expect(useBudgetStore.getState().transactions.duplicate.categoryId).toBe(type === 'income' ? 's' : 'g')
-  expect(useTriageStore.getState().categoryRules.Duplicate).toBe(type === 'income' ? 's' : 'g')
+  expect(useTriageStore.getState().categoryRules.duplicate).toBe(type === 'income' ? 's' : 'g')
 })

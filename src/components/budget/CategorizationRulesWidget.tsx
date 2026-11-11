@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { merchantLabel } from '../../utils/budget/merchant';
 import { Trash2, Plus } from 'lucide-react';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 import { useTriageStore } from '../../store/useTriageStore';
@@ -70,7 +71,7 @@ export const CategorizationRulesWidget: React.FC = () => {
               return (
                 <div key={desc} className="flex justify-between items-center gap-3 p-3 max-md:min-h-[56px] border-b border-[var(--color-border)] last:border-0 bg-[var(--color-bg-secondary)]">
                   <div className="flex flex-col">
-                    <span className="text-[14px] font-medium text-[var(--color-text-primary)]">{desc}</span>
+                    <span className="text-[14px] font-medium text-[var(--color-text-primary)]">{merchantLabel(desc)}</span>
                     <span className="text-[12px] text-[var(--color-text-secondary)]">Matches to: {catName}</span>
                   </div>
                   <button 

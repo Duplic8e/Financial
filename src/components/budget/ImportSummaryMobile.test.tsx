@@ -30,7 +30,7 @@ it('shows one row per outcome with counts', () => {
   seed()
   render(<ImportSummaryMobile />)
   const card = screen.getByTestId('import-summary-mobile')
-  expect(within(card).getByText('To Review')).toBeInTheDocument()
+  expect(within(card).getByText('To Categorize')).toBeInTheDocument()
   expect(within(card).getByText('3')).toBeInTheDocument()
   expect(within(card).getByText('2')).toBeInTheDocument()
   expect(within(card).getByText('1')).toBeInTheDocument()

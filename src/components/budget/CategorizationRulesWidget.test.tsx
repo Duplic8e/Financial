@@ -24,6 +24,7 @@ describe('CategorizationRulesWidget', () => {
     useTriageStore.getState().learnRule('NETFLIX', 'c1')
     render(<CategorizationRulesWidget />)
     expect(screen.getByText('Categorization Rules (1)')).toBeInTheDocument()
-    expect(screen.getByText('NETFLIX')).toBeInTheDocument()
+    // Rules are stored by merchant and shown in title case.
+    expect(screen.getByText('Netflix')).toBeInTheDocument()
   })
 })

@@ -11,6 +11,8 @@ import { useUndoStore } from './useUndoStore';
 import type { ExclusionRule, ExclusionRuleDraft } from '../types/exclusionRules';
 import { validateExclusionDraft } from '../utils/budget/exclusionRules';
 import { applyImportExclusions } from '../utils/budget/applyImportExclusions';
+import { merchantKey } from '../utils/budget/merchant';
+import { guessCategory } from '../utils/autoCategorize';
 
 interface TriageState {
   pendingTransactions: Record<string, TriageTransaction>;
@@ -35,7 +37,15 @@ interface TriageState {
   addPending: (transactions: TriageTransaction[]) => void;
   updatePending: (id: string, updates: Partial<TriageTransaction>) => void;
   setPendingReceiptTreatment: (id: string, treatment: 'income' | 'refund-payment') => void;
-  approveTransaction: (id: string) => void;
+  /** Adds one row to the budget. `learn: false` files it without teaching a
+   *  rule, for a one-off like a single Amazon order in an unusual category. */
+  approveTransaction: (id: string, options?: { learn?: boolean }) => void;
+  /** Files these rows under one category and adds them to the budget. With
+   *  `learn`, it also remembers the merchant and files every other waiting row
+   *  from that merchant. Returns every id it added. */
+  categorizeAndAdd: (ids: string[], categoryId: string, options?: { learn?: boolean }) => string[];
+  /** Adds every waiting row a learned rule matches. Returns the ids added. */
+  addRuleMatches: () => string[];
   /** Approves every row that is neither flagged as a duplicate nor held back by
    *  a flag. Returns the ids it approved, so the caller can offer to undo the
    *  batch. */
@@ -46,8 +56,16 @@ interface TriageState {
   rejectCardPayments: () => void;
   rejectTransaction: (id: string) => void;
   clearAll: () => void;
+  /** Remembers the merchant a description names (see merchantKey), so every
+   *  branch of it is filed under this category from now on. */
   learnRule: (description: string, categoryId: string) => void;
   removeRule: (description: string) => void;
+}
+
+/** Rows that can be filed without a person looking: not a possible duplicate,
+ *  not a card payment, not held by an exclusion rule. */
+function isPlainRow(tx: TriageTransaction): boolean {
+  return !tx.duplicate && !tx.flag && !tx.exclusionMatches?.length
 }
 
 function validRules(state: Pick<TriageState, 'exclusionRules' | 'importSources'>) {
@@ -78,7 +96,40 @@ export function migrateTriageState(persisted: unknown, version: number) {
 
 export const useTriageStore = create<TriageState>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      /** Moves rows into the budget in one write to each store, so filing a
+       *  thousand rows costs one save instead of a thousand. Returns the ids
+       *  that were added. */
+      const fileRows = (rows: Array<{ tx: TriageTransaction; categoryId: string }>): string[] => {
+        if (!rows.length) return [];
+        const { categories, categoryGroups } = useBudgetStore.getState();
+        const valid = rows.filter(({ tx, categoryId }) => {
+          const filed = { ...tx, categoryId };
+          return !tx.exclusionMatches?.length && hasValidPendingCategory(filed, categories, categoryGroups);
+        });
+        if (!valid.length) return [];
+        useUndoStore.getState().dismissUndo();
+        useBudgetStore.setState((budget) => {
+          const transactions = { ...budget.transactions };
+          for (const { tx, categoryId } of valid) {
+            transactions[tx.id] = { id: tx.id, date: tx.date, amount: tx.amount, categoryId, description: tx.description, type: tx.type };
+          }
+          return { transactions };
+        });
+        set((state) => {
+          const pendingTransactions = { ...state.pendingTransactions };
+          const importRecords = { ...state.importRecords };
+          for (const { tx } of valid) {
+            delete pendingTransactions[tx.id];
+            const record = tx.importRecordId && importRecords[tx.importRecordId];
+            if (record) importRecords[record.id] = { ...record, decision: 'accepted' };
+          }
+          return { pendingTransactions, importRecords };
+        });
+        return valid.map(({ tx }) => tx.id);
+      };
+
+      return {
       pendingTransactions: {},
       categoryRules: {},
       exclusionRules: {},
@@ -191,7 +242,13 @@ export const useTriageStore = create<TriageState>()(
           pendingTransactions: { ...state.pendingTransactions, ...Object.fromEntries(excluded.pending.map(tx => [tx.id, tx])) },
           importRecords: excluded.records, importDays: result.days, lastImport: report,
         });
-        return report;
+        // Rows from a merchant already categorized go straight into the
+        // budget; only new merchants wait on the Categorize page.
+        const newIds = new Set(excluded.pending.map(tx => tx.id));
+        const autoAddedIds = get().addRuleMatches().filter(id => newIds.has(id));
+        const finalReport = { ...report, autoAddedIds };
+        set({ lastImport: finalReport });
+        return finalReport;
       },
 
       restoreImportRecord: (id) => {
@@ -224,8 +281,40 @@ export const useTriageStore = create<TriageState>()(
 
       learnRule: (description, categoryId) =>
         set((state) => ({
-          categoryRules: { ...state.categoryRules, [description]: categoryId },
+          categoryRules: { ...state.categoryRules, [merchantKey(description)]: categoryId },
         })),
+
+      categorizeAndAdd: (ids, categoryId, options) => {
+        const learn = options?.learn ?? true;
+        const { categories, categoryGroups } = useBudgetStore.getState();
+        const category = categories[categoryId];
+        if (!category) return [];
+        const kind = categoryGroups[category.groupId]?.kind;
+        const pending = get().pendingTransactions;
+        // A row whose direction does not fit the category (income into an
+        // expense category) is left for the person to look at.
+        const rows = ids.map((id) => pending[id]).filter((tx): tx is TriageTransaction => !!tx && tx.type === kind);
+        const added = fileRows(rows.map((tx) => ({ tx, categoryId })));
+        if (learn && rows[0] && added.length) {
+          get().learnRule(rows[0].description, categoryId);
+          added.push(...get().addRuleMatches());
+        }
+        return added;
+      },
+
+      addRuleMatches: () => {
+        const { categories, categoryGroups } = useBudgetStore.getState();
+        const rules = get().categoryRules;
+        const matches: Array<{ tx: TriageTransaction; categoryId: string }> = [];
+        for (const tx of Object.values(get().pendingTransactions)) {
+          if (!isPlainRow(tx) || entryKindOf(tx) === 'refund-payment') continue;
+          const categoryId = guessCategory(tx.description, categories, rules);
+          const category = categoryId ? categories[categoryId] : undefined;
+          if (!categoryId || !category || categoryGroups[category.groupId]?.kind !== tx.type) continue;
+          matches.push({ tx, categoryId });
+        }
+        return fileRows(matches);
+      },
 
       removeRule: (description) =>
         set((state) => {
@@ -276,7 +365,8 @@ export const useTriageStore = create<TriageState>()(
         });
       },
 
-      approveTransaction: (id) => {
+      approveTransaction: (id, options) => {
+        const learn = options?.learn ?? true;
         const state = get();
         const tx = state.pendingTransactions[id];
         if (!tx || tx.exclusionMatches?.length || !hasValidPendingCategory(tx, useBudgetStore.getState().categories, useBudgetStore.getState().categoryGroups)) return;
@@ -293,7 +383,7 @@ export const useTriageStore = create<TriageState>()(
         });
 
         // Learn the rule if a category is assigned
-        if (tx.categoryId && entryKindOf(tx) !== 'refund-payment') {
+        if (learn && tx.categoryId && entryKindOf(tx) !== 'refund-payment') {
           state.learnRule(tx.description, tx.categoryId);
         }
 
@@ -393,7 +483,8 @@ export const useTriageStore = create<TriageState>()(
         };
         });
       },
-    }),
+      };
+    },
     {
       name: STORAGE_KEYS.triage,
       version: 3,

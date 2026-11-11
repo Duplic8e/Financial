@@ -11,6 +11,7 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
+import { CategorizeBanner } from '../components/budget/CategorizeBanner';
 import { ImportSummary } from '../components/budget/ImportSummary';
 import { ExcludedImportsWidget } from '../components/budget/ExcludedImportsWidget';
 import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
@@ -204,6 +205,7 @@ export const Budgeting: React.FC = () => {
       {isPhone ? <ImportSummaryMobile onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} /> : <ImportSummary onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} />}
 
       <ParadigmBanner selectedMonth={range.to} />
+      {(tab === 'overview' || tab === 'transactions') && <CategorizeBanner />}
 
       {tab === 'overview' && (
         <TabPanel id="overview" className="flex flex-col gap-6">

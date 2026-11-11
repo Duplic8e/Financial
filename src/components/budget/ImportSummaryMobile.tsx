@@ -62,7 +62,8 @@ export const ImportSummaryMobile: React.FC<{ onViewExcluded?: () => void }> = ({
   return (
     <>
       <div data-testid="import-summary-mobile" className="min-w-0 rounded-xl border border-border bg-bg-secondary divide-y divide-border overflow-hidden" role="status" aria-live="polite">
-        {line(review, 'To Review', 'Waiting in your Triage Inbox below', true)}
+        {(report.autoAddedIds?.length ?? 0) > 0 && line(report.autoAddedIds!.length, 'Filed Automatically', 'Stores you have categorized before')}
+        {line(review - (report.autoAddedIds?.length ?? 0), 'To Categorize', 'Open Categorize when you are ready', true)}
         {line(skipped.length, 'Skipped', 'Already handled in an earlier import', false, 'skipped')}
         {line(excludedIds.length, 'Excluded', 'Matched one of your exclusion rules', false, 'excluded')}
       </div>

@@ -14,6 +14,7 @@ const Investments = lazy(() => import('./pages/Investments').then((m) => ({ defa
 const Planner = lazy(() => import('./pages/Planner').then((m) => ({ default: m.Planner })))
 const PlannerTool = lazy(() => import('./pages/PlannerTool').then((m) => ({ default: m.PlannerTool })))
 const Compensation = lazy(() => import('./pages/Compensation').then((m) => ({ default: m.Compensation })))
+const Categorize = lazy(() => import('./pages/Categorize').then((m) => ({ default: m.Categorize })))
 
 function App() {
   const { theme } = useThemeStore()
@@ -58,6 +59,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="budget" element={<Budgeting />} />
+          <Route path="budget/categorize" element={<Categorize />} />
           <Route path="investments" element={<Investments />} />
           <Route path="planner" element={<Planner />} />
           <Route path="planner/income-tax" element={<Navigate to="/planner/salary-tax" replace />} />

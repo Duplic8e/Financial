@@ -33,7 +33,7 @@ for (const phone of [false, true]) {
     await page.reload()
     await page.getByRole('tab', { name: 'Transactions', exact: true }).click()
     await upload(overlap, 'june-july.csv')
-    if (phone) await expect(page.getByTestId('import-summary-mobile')).toContainText(/1\s*To Review[\s\S]*4\s*Skipped/)
+    if (phone) await expect(page.getByTestId('import-summary-mobile')).toContainText(/1\s*To Categorize[\s\S]*4\s*Skipped/)
     else await expect(page.getByRole('status').filter({ hasText: 'previously handled' })).toHaveText(/4 previously handled transactions skipped.*1 new transaction sent to review/)
     await expect(page.getByRole('button', { name: 'Accept All (1)' })).toBeVisible()
     if (phone) await page.getByTestId('import-summary-mobile').getByRole('button', { name: /Skipped/ }).click()

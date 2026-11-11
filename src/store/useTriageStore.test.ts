@@ -186,7 +186,8 @@ describe('useTriageStore approval', () => {
     useBudgetStore.setState({ categories: { 'c-1': { id: 'c-1', name: 'Entertainment', groupId: 'expense', targetAmount: 0 } }, categoryGroups: { expense: { id: 'expense', name: 'Expenses', kind: 'expense' } } })
     useTriageStore.getState().addPending([pending({ categoryId: 'c-1' })])
     useTriageStore.getState().approveTransaction('t1')
-    expect(useTriageStore.getState().categoryRules.NETFLIX).toBe('c-1')
+    // Stored by merchant, so every branch and reference number matches.
+    expect(useTriageStore.getState().categoryRules.netflix).toBe('c-1')
   })
 
   it('learns nothing from an uncategorized approval', () => {
@@ -232,8 +233,8 @@ describe('useTriageStore rejection and rules', () => {
   it('removes only the named rule', () => {
     useTriageStore.getState().learnRule('NETFLIX', 'c-1')
     useTriageStore.getState().learnRule('SPOTIFY', 'c-2')
-    useTriageStore.getState().removeRule('NETFLIX')
-    expect(useTriageStore.getState().categoryRules).toEqual({ SPOTIFY: 'c-2' })
+    useTriageStore.getState().removeRule('netflix')
+    expect(useTriageStore.getState().categoryRules).toEqual({ spotify: 'c-2' })
   })
 })
 

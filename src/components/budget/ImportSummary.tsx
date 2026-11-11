@@ -11,7 +11,8 @@ export function ImportSummary({ onViewExcluded }: { onViewExcluded?: () => void 
   if (!report) return null
   const skipped = report.skippedIds.map(id => records[id]).filter(Boolean)
   const excludedIds = report.excludedIds ?? []
-  const reviewCount = report.addedIds.filter(id => !excludedIds.includes(id)).length
+  const autoAdded = report.autoAddedIds?.length ?? 0
+  const reviewCount = report.addedIds.filter(id => !excludedIds.includes(id)).length - autoAdded
   const restoreWithUndo = (id: string) => {
     const offer = captureTriageUndo({pendingIds:[id],recordIds:[id]})
     restore(id)
@@ -20,6 +21,7 @@ export function ImportSummary({ onViewExcluded }: { onViewExcluded?: () => void 
   return <div className="min-w-0 rounded-lg border border-border bg-bg-secondary p-3 text-[14px]">
     <p role="status" aria-live="polite">
       {skipped.length} previously handled transaction{skipped.length === 1 ? '' : 's'} skipped.
+      {autoAdded > 0 && <> {autoAdded} filed automatically from stores you have categorized.</>}
       {' '}{reviewCount} new transaction{reviewCount === 1 ? '' : 's'} sent to review.
       {excludedIds.length > 0 && <> {excludedIds.length} excluded by your rules.</>}
     </p>

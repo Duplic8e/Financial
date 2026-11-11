@@ -6,6 +6,11 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Added
+- A Categorize page (Budgeting → "to categorize" → Start). Imported transactions are grouped by store, newest first, with a Last 3 Months or All switch. Pick a category once for a store and every transaction from it is filed, including older ones still waiting, and Ledger remembers the store, so later imports from it go straight into your budget. Pick One by One files a single transaction without teaching the store (for a store like Amazon), Not Spending leaves a transfer or payment out, and Undo takes back the whole choice, rule included.
+- Learned rules now match the store, not the exact bank text: LOBLAWS #1234 TORONTO ON and LOBLAWS #5678 NORTH YORK ON are both Loblaws, and CIBC chequing prefixes such as "Point of Sale - Interac RETAIL PURCHASE" are ignored.
+- The import summary says how many transactions were filed automatically.
+
 ### Changed
 - A new iOS-style look. The six themes are replaced by Light and Dark in the colors of Apple's own apps, with the system font (San Francisco on iPhone), grouped white or dark cards on a grey background, large bold page titles and blue bar buttons. Settings → Appearance picks System, Light or Dark; System follows your iPhone, including the automatic switch at sunset. Every earlier theme choice moves to System.
 - On iPhone the top bar now sits below the Dynamic Island and the status bar instead of under them, and the tab bar is translucent with the home indicator's space below it.

@@ -28,6 +28,8 @@ export interface ImportDay {
 
 export interface ImportReport {
   excludedIds?: string[]
+  /** Added straight to the budget because a learned rule matched. */
+  autoAddedIds?: string[]
   addedIds: string[]
   skippedIds: string[]
   changedDays: Array<{ sourceId: string; date: string; missingCount: number }>

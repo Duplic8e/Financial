@@ -152,9 +152,12 @@ describe('CSVUploader Chase category fallback', () => {
 
     await waitFor(() => {
       const pending = useTriageStore.getState().pendingTransactions
-      // The learned "lidl" rule wins over Chase's own Groceries category.
-      expect(pending['r1'].categoryId).toBe('cp')
-      // No rule matches TARGET, so Chase's Shopping maps to Personal.
+      // The learned "lidl" rule wins over Chase's own Groceries category, and a
+      // rule match goes straight into the budget instead of waiting.
+      expect(useBudgetStore.getState().transactions['r1'].categoryId).toBe('cp')
+      expect(pending['r1']).toBeUndefined()
+      // No rule matches TARGET, so Chase's Shopping maps to Personal, and a
+      // bank's guess still waits for a person to confirm it.
       expect(pending['r2'].categoryId).toBe('cp')
     })
   })
