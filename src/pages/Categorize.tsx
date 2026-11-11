@@ -6,16 +6,29 @@ import { useTriageStore } from '../store/useTriageStore'
 import { useBudgetStore } from '../store/useBudgetStore'
 import { useUndoStore } from '../store/useUndoStore'
 import { captureTriageUndo } from '../utils/budget/triageUndo'
-import { buildMerchantGroups, isQueueRow, monthsBefore, type MerchantGroup } from '../utils/budget/categorizeQueue'
+import { GROUP_SORTS, buildMerchantGroups, isQueueRow, monthsBefore, sortGroups, type GroupSort, type MerchantGroup } from '../utils/budget/categorizeQueue'
 import { formatMoneyWithCents } from '../components/planner/format'
 import { NewCategorySheet } from '../components/budget/CategoryEditSheets'
 import type { Category, CategoryGroup } from '../types/budget'
 import type { TriageTransaction } from '../types/triage'
+import { STORAGE_KEYS } from '../store/storageKeys'
 
 type Window = '3m' | 'all'
 
 const IGNORE = '__not-spending__'
 const NEW_CATEGORY = '__new-category__'
+
+/** The last sort picked, remembered on this device only. */
+const SORT_KEY = STORAGE_KEYS.categorizeSort
+
+function savedSort(): GroupSort {
+  try {
+    const value = localStorage.getItem(SORT_KEY)
+    return GROUP_SORTS.some((s) => s.value === value) ? (value as GroupSort) : 'newest'
+  } catch {
+    return 'newest'
+  }
+}
 
 function localToday(): string {
   const now = new Date()
@@ -86,6 +99,11 @@ export const Categorize: React.FC = () => {
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)
   const [windowChoice, setWindowChoice] = useState<Window>('3m')
+  const [sort, setSortState] = useState<GroupSort>(savedSort)
+  const setSort = (next: GroupSort) => {
+    setSortState(next)
+    try { localStorage.setItem(SORT_KEY, next) } catch { /* private mode: just not remembered */ }
+  }
   const [open, setOpen] = useState<string | null>(null)
   const [filedThisVisit, setFiledThisVisit] = useState(0)
   /** The rows a new category is being made for; they are filed into it on save. */
@@ -93,7 +111,7 @@ export const Categorize: React.FC = () => {
 
   const pending = useMemo(() => Object.values(pendingTransactions), [pendingTransactions])
   const since = windowChoice === '3m' ? monthsBefore(localToday(), 3) : undefined
-  const groups = useMemo(() => buildMerchantGroups(pending, { since }), [pending, since])
+  const groups = useMemo(() => sortGroups(buildMerchantGroups(pending, { since }), sort), [pending, since, sort])
   const queueTotal = pending.filter(isQueueRow).length
   const inWindow = groups.reduce((n, g) => n + g.count, 0)
   const needsLook = pending.length - queueTotal
@@ -229,9 +247,22 @@ export const Categorize: React.FC = () => {
         </section>
       ) : (
         <>
-          <p className="text-[13px] font-medium uppercase tracking-wide text-text-secondary px-1 -mb-3">
-            {groups.length} store{groups.length === 1 ? '' : 's'} · {inWindow} transaction{inWindow === 1 ? '' : 's'}
-          </p>
+          <div className="flex items-center justify-between gap-3 px-1 -mb-2">
+            <p className="text-[13px] font-medium uppercase tracking-wide text-text-secondary">
+              {groups.length} store{groups.length === 1 ? '' : 's'} · {inWindow} transaction{inWindow === 1 ? '' : 's'}
+            </p>
+            <label className="flex items-center gap-1 text-[15px] text-text-secondary shrink-0">
+              <span>Sort</span>
+              <select
+                aria-label="Sort stores"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as GroupSort)}
+                className="min-h-[44px] bg-transparent text-accent font-semibold text-right appearance-none pr-1"
+              >
+                {GROUP_SORTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+          </div>
           <ul className="flex flex-col gap-3" aria-label="Stores to categorize">
             {groups.map((group) => (
               <li key={group.id} className="themed-card p-4 flex flex-col gap-3" data-testid="merchant-group">

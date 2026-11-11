@@ -103,3 +103,16 @@ it('moves set-aside transfers into the queue on request', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Categorize them too' }))
   expect(screen.getByLabelText('Category for Internet Transfer')).toBeInTheDocument()
 })
+
+it('sorts stores by number of transactions and remembers the choice', () => {
+  localStorage.removeItem('ledger-categorize-sort')
+  const { unmount } = page()
+  const names = () => screen.getAllByTestId('merchant-group').map((g) => within(g).getByRole('heading').textContent)
+  expect(names()).toEqual(['Tim Hortons', 'Loblaws'])
+  fireEvent.change(screen.getByLabelText('Sort stores'), { target: { value: 'most' } })
+  expect(names()).toEqual(['Loblaws', 'Tim Hortons'])
+  unmount()
+  page()
+  expect(screen.getByLabelText('Sort stores')).toHaveValue('most')
+  localStorage.removeItem('ledger-categorize-sort')
+})

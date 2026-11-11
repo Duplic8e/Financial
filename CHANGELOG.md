@@ -7,6 +7,7 @@ pre-1.0 beta.
 ## [Unreleased]
 
 ### Added
+- Sort the Categorize page by Newest, Oldest, Most Transactions, Largest Total or Store Name. The choice is remembered on this device.
 - Restore All on Excluded Imports sends every excluded or ignored entry back to review at once, with Undo.
 - On the Categorize page, Categorize Them Too moves transfers and card payments that were set aside into the queue, where they can be filed or marked Not Spending like any other store.
 - Make a category while you categorize: the + beside each store (or + New Category in its picker) opens a sheet for the name and its group, existing or new, and files the store into it straight away.

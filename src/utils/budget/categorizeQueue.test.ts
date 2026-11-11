@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMerchantGroups, monthsBefore } from './categorizeQueue'
+import { buildMerchantGroups, monthsBefore, sortGroups } from './categorizeQueue'
 import type { TriageTransaction } from '../../types/triage'
 
 const tx = (id: string, description: string, date: string, amount: number, extra: Partial<TriageTransaction> = {}): TriageTransaction =>
@@ -47,5 +47,28 @@ describe('monthsBefore', () => {
   it('goes back calendar months', () => {
     expect(monthsBefore('2026-11-11', 3)).toBe('2026-08-11')
     expect(monthsBefore('2026-01-15', 2)).toBe('2025-11-15')
+  })
+})
+
+describe('sortGroups', () => {
+  const groups = buildMerchantGroups([
+    tx('a1', 'ALPHA', '2026-11-01', 5), tx('a2', 'ALPHA', '2026-10-01', 5), tx('a3', 'ALPHA', '2026-09-01', 5),
+    tx('b1', 'BRAVO', '2026-11-09', 500),
+    tx('c1', 'CHARLIE', '2026-06-01', 20), tx('c2', 'CHARLIE', '2026-05-01', 20),
+  ])
+  const order = (sort: Parameters<typeof sortGroups>[1]) => sortGroups(groups, sort).map((g) => g.label)
+
+  it('sorts by newest, oldest, most transactions, largest total and name', () => {
+    expect(order('newest')).toEqual(['Bravo', 'Alpha', 'Charlie'])
+    expect(order('oldest')).toEqual(['Charlie', 'Alpha', 'Bravo'])
+    expect(order('most')).toEqual(['Alpha', 'Charlie', 'Bravo'])
+    expect(order('largest')).toEqual(['Bravo', 'Charlie', 'Alpha'])
+    expect(order('name')).toEqual(['Alpha', 'Bravo', 'Charlie'])
+  })
+
+  it('does not reorder the input', () => {
+    const before = groups.map((g) => g.id)
+    sortGroups(groups, 'name')
+    expect(groups.map((g) => g.id)).toEqual(before)
   })
 })

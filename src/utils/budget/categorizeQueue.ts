@@ -60,3 +60,28 @@ export function buildMerchantGroups(pending: TriageTransaction[], options: { sin
     // filing it clears the most.
     .sort((a, b) => b.latestDate.localeCompare(a.latestDate) || b.count - a.count || a.label.localeCompare(b.label))
 }
+
+export type GroupSort = 'newest' | 'oldest' | 'most' | 'largest' | 'name'
+
+export const GROUP_SORTS: ReadonlyArray<{ value: GroupSort; label: string }> = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'most', label: 'Most transactions' },
+  { value: 'largest', label: 'Largest total' },
+  { value: 'name', label: 'Store name (A–Z)' },
+]
+
+/** Reorders merchant groups. Ties fall back to newest, then name, so the
+ *  order never jumps around between renders. */
+export function sortGroups(groups: MerchantGroup[], sort: GroupSort): MerchantGroup[] {
+  const newest = (a: MerchantGroup, b: MerchantGroup) => b.latestDate.localeCompare(a.latestDate)
+  const name = (a: MerchantGroup, b: MerchantGroup) => a.label.localeCompare(b.label)
+  const compare: Record<GroupSort, (a: MerchantGroup, b: MerchantGroup) => number> = {
+    newest: (a, b) => newest(a, b) || b.count - a.count || name(a, b),
+    oldest: (a, b) => a.latestDate.localeCompare(b.latestDate) || b.count - a.count || name(a, b),
+    most: (a, b) => b.count - a.count || newest(a, b) || name(a, b),
+    largest: (a, b) => Math.abs(b.total) - Math.abs(a.total) || newest(a, b) || name(a, b),
+    name: (a, b) => name(a, b) || newest(a, b),
+  }
+  return [...groups].sort(compare[sort])
+}
