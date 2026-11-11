@@ -5,6 +5,7 @@ import { ThemeSwatchGrid } from '../theme/ThemeSwatchGrid'
 import { MarketDataSection, MarketDataStatusBadge } from './MarketDataSettings'
 import { BackupControls } from './BackupControls'
 import { DriveSyncControls } from './DriveSyncControls'
+import { HubSyncControls } from './HubSyncControls'
 import { reminderSupport, remindersEnabled, setRemindersEnabled, type ReminderSupport } from '../../utils/reminders'
 import { Checkbox } from '../ui/Checkbox'
 import { useIsDesktop } from '../../hooks/useMediaQuery'
@@ -185,6 +186,7 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
     </SectionCard>
 
     <SectionCard icon={<RefreshCw className="w-4 h-4" />} title="Sync">
+      <HubSyncControls />
       <DriveSyncControls />
     </SectionCard>
 
@@ -200,7 +202,7 @@ export const SettingsSheet: React.FC<SettingsSheetProps> = ({ open, onClose, onO
         refundsOn={refundsAndPaymentsEnabled}
         onRefundsChange={setRefundsAndPaymentsEnabled}
         backup={<BackupControls />}
-        sync={<DriveSyncControls />}
+        sync={<><HubSyncControls /><DriveSyncControls /></>}
         reminders={<ReminderSettings />}
         footer={footer}
       />

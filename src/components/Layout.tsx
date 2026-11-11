@@ -11,7 +11,7 @@ import { CommandPalette } from './CommandPalette'
 import { ShortcutsHelp } from './ui/ShortcutsHelp'
 import { ErrorBoundary } from './ErrorBoundary'
 import { TopBarSlotContext } from './topBarSlot'
-import { LayoutDashboard, Wallet, TrendingUp, Briefcase, Calculator, Settings, Search } from 'lucide-react'
+import { LayoutDashboard, Wallet, TrendingUp, Briefcase, Calculator, Settings, Search, LayoutGrid } from 'lucide-react'
 import { LedgerMark } from './ui/LedgerMark'
 import { shouldShowWhatsNew, LAST_SEEN_VERSION_KEY } from '../utils/whatsNew'
 import { useSWUpdate } from '../hooks/useSWUpdate'
@@ -24,6 +24,8 @@ import { getCachedToken } from '../utils/driveAuth'
 import { useSyncStore } from '../store/useSyncStore'
 import { useViewportHeight } from '../hooks/useViewportHeight'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useHubAutoSync } from '../hooks/useHubSync'
+import { HUB_URL } from '../utils/hubSync'
 
 // CHANGELOG.md is imported raw by the modal, so the modal is split out of the entry chunk.
 const WhatsNewModal = React.lazy(() => import('./ui/WhatsNewModal').then((m) => ({ default: m.WhatsNewModal })))
@@ -36,6 +38,7 @@ export const Layout: React.FC = () => {
   const swUpdate = useSWUpdate()
   useViewportHeight()
   const routeName = useDocumentTitle()
+  useHubAutoSync()
 
   // <main> is the scroll container, not the document, so the browser has no
   // reason to reset it between routes: switching from a long page used to
@@ -201,6 +204,16 @@ export const Layout: React.FC = () => {
           <div className="p-6 pb-3 flex items-center gap-2.5">
             <LedgerMark size={26} className="text-accent shrink-0" />
             <span className="text-2xl font-bold tracking-tighter text-accent font-display">Ledger</span>
+            {HUB_URL && (
+              <a
+                href={HUB_URL}
+                aria-label="Back to Hub"
+                title="Back to Hub"
+                className="ml-auto flex items-center justify-center w-8 h-8 rounded-md text-text-secondary hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </a>
+            )}
           </div>
 
           <div className="px-4">
@@ -297,11 +310,20 @@ export const Layout: React.FC = () => {
             <span className="text-[17px] font-bold tracking-tighter text-accent font-display">Ledger</span>
           </span>
           <div ref={setTopBarSlot} data-topbar-slot className="flex-1 min-w-0 flex items-center gap-2" />
+          {HUB_URL && (
+            <a
+              href={HUB_URL}
+              aria-label="Back to Hub"
+              className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </a>
+          )}
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             aria-label="Search"
-            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
+            className={`${HUB_URL ? '-ml-2 ' : ''}flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent`}
           >
             <Search className="w-5 h-5" />
           </button>

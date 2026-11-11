@@ -4,8 +4,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// The standalone site lives at /ledger/. The Hub build serves Ledger from a
+// sub-path of its own site and passes that path in BASE_PATH.
 export default defineConfig({
-  base: '/ledger/',
+  base: process.env.BASE_PATH ?? '/ledger/',
   plugins: [
     react(),
     tailwindcss(),
