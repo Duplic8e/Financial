@@ -18,7 +18,7 @@ import { AccountCurrencyReview } from '../components/accounts/AccountCurrencyRev
 import { useAccountsStore } from '../store/useAccountsStore';
 import { useBudgetStore } from '../store/useBudgetStore';
 import { DashboardMobile } from '../components/dashboard/DashboardMobile';
-import { ImportReminderBanner } from '../components/budget/ImportReminderBanner';
+import { NeedsAttentionCard } from '../components/budget/NeedsAttentionCard';
 import { DASHBOARD_WIDGET_IDS, DASHBOARD_WIDGET_LABELS, WIDGET_SPAN } from './dashboardWidgets';
 
 // Re-exported so callers (and tests) can import ids/labels from this module too.
@@ -145,7 +145,7 @@ export const Dashboard: React.FC = () => {
         // not create anything, which is why the desktop button is an outline.
         phoneAction={<div className="flex items-center">{hasUsdAccount && <Suspense fallback={null}><AccountFxControls phone /></Suspense>}<TopBarAction icon={SlidersHorizontal} label="Customize" tone="quiet" onClick={openCustomize} /></div>}
       />
-      <div className="mb-4 empty:hidden"><ImportReminderBanner linkToBudget /></div>
+      <div className="mb-4 empty:hidden"><NeedsAttentionCard compact /></div>
 
       <AccountCurrencyReview />
       <FirstRunChecklist accountCount={accountCount} transactionCount={transactionCount} />

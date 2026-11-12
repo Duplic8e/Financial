@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChartNoAxesCombined, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { monthKeyOf, rangeOf, shiftMonthKey, type Period } from '../utils/budget/period';
 import { Tabs, type TabItem } from '../components/ui/Tabs';
 import { TabPanel } from '../components/ui/TabPanel';
@@ -11,9 +11,10 @@ import { MonthlySummaryWidget } from '../components/budget/MonthlySummaryWidget'
 import { TransactionModal } from '../components/budget/TransactionModal';
 import { CSVUploader } from '../components/budget/CSVUploader';
 import { TriageInboxWidget } from '../components/budget/TriageInboxWidget';
-import { CategorizeBanner } from '../components/budget/CategorizeBanner';
 import { CashPlanWidget } from '../components/budget/CashPlanWidget';
-import { ImportReminderBanner } from '../components/budget/ImportReminderBanner';
+import { NeedsAttentionCard } from '../components/budget/NeedsAttentionCard';
+import { BillsThisMonthCard } from '../components/budget/BillsThisMonthCard';
+import { SavingsRateMobile } from '../components/budget/SavingsRateMobile';
 import { ImportSummary } from '../components/budget/ImportSummary';
 import { ExcludedImportsWidget } from '../components/budget/ExcludedImportsWidget';
 import { CategorizationRulesWidget } from '../components/budget/CategorizationRulesWidget';
@@ -43,11 +44,13 @@ import { periodChoices, periodChoiceValue, periodFromChoice, presetLabel } from 
 
 type BudgetTab = 'overview' | 'insights' | 'transactions' | 'setup';
 
+// Three tabs, one job each: look at the month, work through transactions,
+// set the plan. Insights is one tap from This Month and keeps its own URL
+// (?tab=insights), but is not a fourth tab.
 const BUDGET_TABS: readonly TabItem<BudgetTab>[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'insights', label: 'Insights' },
+  { id: 'overview', label: 'This Month' },
   { id: 'transactions', label: 'Transactions' },
-  { id: 'setup', label: 'Setup' },
+  { id: 'setup', label: 'Plan' },
 ];
 
 const isBudgetTab = (v: string | null): v is BudgetTab =>
@@ -158,6 +161,17 @@ export const Budgeting: React.FC = () => {
     </div>
   );
 
+  const insightsLink = (
+    <button type="button" onClick={() => setTab('insights')} className="themed-card !border-0 flex items-center gap-3 p-4 min-h-[64px] text-left active:opacity-60">
+      <span className="w-9 h-9 shrink-0 rounded-full bg-accent text-bg-primary flex items-center justify-center"><ChartNoAxesCombined className="w-5 h-5" aria-hidden="true" /></span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-[17px] font-semibold">Insights</span>
+        <span className="block text-[14px] text-text-secondary">Cash flow, savings rate, subscriptions and trends.</span>
+      </span>
+      <ChevronRight className="w-5 h-5 shrink-0 text-text-secondary" aria-hidden="true" />
+    </button>
+  );
+
   return (
     <div className="flex flex-col gap-6 w-full min-h-full animate-fade-in">
       <PageHeader
@@ -206,42 +220,48 @@ export const Budgeting: React.FC = () => {
       <Tabs items={BUDGET_TABS} value={tab} onChange={setTab} ariaLabel="Budgeting sections" />
       {isPhone ? <ImportSummaryMobile onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} /> : <ImportSummary onViewExcluded={() => { setTab('transactions'); setExcludedFocusRequest(value => value + 1); }} />}
 
-      <ParadigmBanner selectedMonth={range.to} />
-      {/* On a phone the period's key figure must stay in the first screen, so the reminder sits below the tab's content there. */}
-      {isDesktop && <ImportReminderBanner />}
-      {(tab === 'overview' || tab === 'transactions') && <CategorizeBanner />}
-
       {tab === 'overview' && (
         <TabPanel id="overview" className="flex flex-col gap-6">
-          {!isDesktop ? <BudgetOverviewMobile range={range} /> : (<>
+          {!isDesktop ? (
+            <BudgetOverviewMobile range={range} attention={<NeedsAttentionCard />} bills={<BillsThisMonthCard month={range.to} />} />
+          ) : (<>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <IncomeWidget range={range} />
             <ExpenseWidget range={range} />
-            {/* Rule 3: on a phone the period's net change leads the page.
-                CSS order, so desktop keeps its three columns as they were. */}
             <div className="order-first md:order-none min-w-0">
               <MonthlySummaryWidget range={range} />
             </div>
           </div>
 
+          <NeedsAttentionCard />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <BudgetProgressWidget range={range} />
-            <CashFlowWidget range={range} />
+            <BillsThisMonthCard month={range.to} />
           </div>
-
-          <SavingsRateWidget range={range} />
 
           <OwedToMeWidget />
           </>)}
-          <CashPlanWidget />
+          {insightsLink}
         </TabPanel>
       )}
 
       {tab === 'insights' && (
         <TabPanel id="insights" className="flex flex-col gap-6">
-          {!isDesktop ? (
+          <button type="button" onClick={() => setTab('overview')} className="-mb-3 inline-flex items-center gap-0.5 self-start min-h-[44px] -ml-2 pr-2 text-[17px] text-accent">
+            <ChevronLeft className="w-6 h-6" aria-hidden="true" /> This Month
+          </button>
+          <h2 className="text-[22px] font-bold tracking-tight -mb-2">Insights</h2>
+          {!isDesktop ? (<>
             <InsightsMobile range={range} />
-          ) : (<>
+            <CashFlowWidget range={range} />
+            <SavingsRateMobile range={range} />
+          </>) : (<>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CashFlowWidget range={range} />
+            <SavingsRateWidget range={range} />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SubscriptionsWidget />
             <AnomalyAlertsWidget range={range} />
@@ -257,6 +277,7 @@ export const Budgeting: React.FC = () => {
 
       {tab === 'transactions' && (
         <TabPanel id="transactions" className="flex flex-col gap-6">
+          <NeedsAttentionCard />
           {isPhone ? <TriageInboxMobile /> : <TriageInboxWidget />}
           <ExcludedImportsWidget focusRequest={excludedFocusRequest} />
 
@@ -266,6 +287,8 @@ export const Budgeting: React.FC = () => {
 
       {tab === 'setup' && (
         <TabPanel id="setup" className="flex flex-col gap-6">
+          <CashPlanWidget />
+          <ParadigmBanner selectedMonth={range.to} />
           {isPhone ? (
             <BudgetSetupMobile selectedMonth={range.to} />
           ) : (
@@ -278,7 +301,6 @@ export const Budgeting: React.FC = () => {
               <ExclusionRulesWidget />
             </>
           )}
-      {!isDesktop && <ImportReminderBanner />}
         </TabPanel>
       )}
 

@@ -5,8 +5,6 @@ import { useShowMore } from '../../hooks/useShowMore'
 import type { MonthRange } from '../../utils/budget/period'
 import { useBudgetOverview, type BudgetOverview, type CategoryRow } from './useBudgetOverview'
 import { isOverRow, type RowPace } from '../../utils/budget/pace'
-import { CashFlowWidget } from './CashFlowWidget'
-import { SavingsRateMobile } from './SavingsRateMobile'
 import { OwedToMeWidget } from './OwedToMeWidget'
 
 const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5, var(--error))']
@@ -110,9 +108,9 @@ const BudgetCard: React.FC<{ d: BudgetOverview }> = ({ d }) => {
   )
 }
 
-/** Phone Budgeting Overview: a donut that switches between Expense and Income (the switch sits under it), then
- *  In, Out, Net and Saved, the budget, the income sources, and the cash flow, savings rate and who owes you. */
-export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range }) => {
+/** Phone Budgeting, This Month: In, Out, Net and Saved lead, then whatever needs attention, the budget, this
+ *  month's bills, the Expense and Income donut, and who owes you. Cash flow and savings rate live in Insights. */
+export const BudgetOverviewMobile: React.FC<{ range: MonthRange; attention?: React.ReactNode; bills?: React.ReactNode }> = ({ range, attention, bills }) => {
   const d = useBudgetOverview(range)
   const [view, setView] = useState<'out' | 'in'>('out')
   const spending = view === 'out'
@@ -121,6 +119,22 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
 
   return (
     <div className="flex flex-col gap-4">
+      <Card label="Net Change">
+        <div className="grid grid-cols-4 gap-1 text-center">
+          <div data-testid="overview-in"><div className="text-[12px] text-text-secondary">In</div><div className="text-[16px] font-semibold tabular-nums text-accent">{formatMoney(d.income)}</div></div>
+          <div><div className="text-[12px] text-text-secondary">Out</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{formatMoney(d.expense)}</div></div>
+          <div><div className="text-[12px] text-text-secondary">Net</div><div data-key-figure className={`text-[16px] font-semibold tabular-nums ${tone(d.net)}`}>{sign(d.net)}</div></div>
+          <div><div className="text-[12px] text-text-secondary">Saved</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{d.rate === null ? '-' : `${Math.round(d.rate * 100)}%`}</div></div>
+        </div>
+        {d.projected !== null && (
+          <div className="mt-3 border-t border-border pt-3 text-center text-[14px] text-text-secondary">
+            Projected Net <span className={`font-medium tabular-nums ${tone(d.projected)}`}>{sign(d.projected)}</span>
+          </div>
+        )}
+      </Card>
+      {attention}
+      <BudgetCard d={d} />
+      {bills}
       <Card label={spending ? 'Expense' : 'Income'}>
         {total > 0 ? (
           <div className="flex items-center gap-4">
@@ -145,22 +159,6 @@ export const BudgetOverviewMobile: React.FC<{ range: MonthRange }> = ({ range })
           ))}
         </div>
       </Card>
-      <Card label="Net Change">
-        <div className="grid grid-cols-4 gap-1 text-center">
-          <div data-testid="overview-in"><div className="text-[12px] text-text-secondary">In</div><div className="text-[16px] font-semibold tabular-nums text-accent">{formatMoney(d.income)}</div></div>
-          <div><div className="text-[12px] text-text-secondary">Out</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{formatMoney(d.expense)}</div></div>
-          <div><div className="text-[12px] text-text-secondary">Net</div><div data-key-figure className={`text-[16px] font-semibold tabular-nums ${tone(d.net)}`}>{sign(d.net)}</div></div>
-          <div><div className="text-[12px] text-text-secondary">Saved</div><div className="text-[16px] font-semibold tabular-nums text-text-primary">{d.rate === null ? '-' : `${Math.round(d.rate * 100)}%`}</div></div>
-        </div>
-        {d.projected !== null && (
-          <div className="mt-3 border-t border-border pt-3 text-center text-[14px] text-text-secondary">
-            Projected Net <span className={`font-medium tabular-nums ${tone(d.projected)}`}>{sign(d.projected)}</span>
-          </div>
-        )}
-      </Card>
-      <BudgetCard d={d} />
-      <CashFlowWidget range={range} />
-      <SavingsRateMobile range={range} />
       <OwedToMeWidget />
     </div>
   )

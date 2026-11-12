@@ -6,6 +6,13 @@ pre-1.0 beta.
 
 ## [Unreleased]
 
+### Changed
+- Budgeting is reorganized into three tabs with one job each. This Month shows In, Out, Net and Saved, then what needs attention, your budget, this month's bills and the Expense and Income chart. Transactions holds the list, review and excluded imports. Plan holds the Cash Plan, targets, categories and rules (it was called Setup).
+- Insights is no longer a tab: it is one tap from the bottom of This Month, and now also holds the Cash Flow chart and Savings Rate.
+- One Needs Attention card replaces the separate banners. It lists this month's import, how many transactions are waiting to be categorized and how many need review, and disappears when there is nothing to do. It also appears on the Dashboard in a shorter form.
+- A Bills card on This Month shows each monthly bill as paid or still due, unpaid first, with what is left to pay.
+- Projected Net on Budgeting now counts unpaid bills, so it matches the Dashboard.
+
 ### Added
 - Cash Plan on Budgeting → Overview ties the sections together: salary from Compensation, less estimated tax, CPP and EI, less your ESPP contribution, gives take-home; recurring bills and the rest of your budget targets come out of that, leaving what is left over or short. One menu restates every line weekly, biweekly, monthly or yearly.
 - Recurring bills: add rent, phone, insurance or anything on a schedule in the Cash Plan, with an amount, how often, the day it is due and an optional budget category. A bill filed under a category is not counted a second time against that category's target.

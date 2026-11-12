@@ -1,4 +1,6 @@
 import { useBudgetStore } from '../../store/useBudgetStore'
+import { useRecurringStore } from '../../store/useRecurringStore'
+import { unpaidBillsThisMonth } from '../../utils/budget/cashPlan'
 import { incomeExpenseSeries, savingsRate, totalMonthlyBudget } from '../../store/budgetSelectors'
 import { countsAsIncome, iouBalances } from '../../utils/budget/sharedExpenses'
 import { inRange, isSingleMonth, monthKeyOf, monthsInRange, type MonthRange } from '../../utils/budget/period'
@@ -14,6 +16,7 @@ export interface CategoryRow { id: string; name: string; spent: number; target: 
 /** Everything the phone Overview shows for a period, from the same rules the desktop widgets use. */
 export function useBudgetOverview(range: MonthRange) {
   const transactions = useBudgetStore((s) => s.transactions)
+  const plannedBills = useRecurringStore((s) => s.plannedBills)
   const categories = useBudgetStore((s) => s.categories)
   const categoryGroups = useBudgetStore((s) => s.categoryGroups)
   const bills = useBillIds()
@@ -79,8 +82,11 @@ export function useBudgetOverview(range: MonthRange) {
 
   const series = incomeExpenseSeries(transactions, months, new Date(`${range.to}-15T12:00:00`))
   const rate = savingsRate(series)
+  // Unpaid hand-entered bills count too, so this agrees with the Dashboard.
+  const detected = current ? detectRecurring(transactions) : []
   const projected = current
-    ? forecastMonthEnd(transactions, detectRecurring(transactions), range.to, now.toISOString().slice(0, 10)).projectedNet
+    ? forecastMonthEnd(transactions, detected, range.to, now.toISOString().slice(0, 10),
+        unpaidBillsThisMonth(plannedBills, transactions, range.to, detected.map((d) => d.description))).projectedNet
     : null
   const owed = Object.values(iouBalances(transactions)).filter((v) => v > 0.005).reduce((s, v) => s + v, 0)
 

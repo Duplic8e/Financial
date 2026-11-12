@@ -133,13 +133,14 @@ describe('Budgeting header on a phone', () => {
   })
 })
 
-it('places one exclusion rules widget in Setup and preserves the tabs', () => {
+it('places one exclusion rules widget in Plan and keeps three tabs', () => {
   cleanup()
   renderBudget()
-  fireEvent.click(screen.getByRole('tab', { name: 'Setup' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'Plan' }))
   expect(screen.getAllByText('Exclusion Rules (0)')).toHaveLength(1)
   expect(screen.getByRole('tab', { name: 'Transactions' })).toBeInTheDocument()
-  expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'This Month' })).toBeInTheDocument()
+  expect(screen.getAllByRole('tab').filter((t) => t.closest('[aria-label="Budgeting sections"]'))).toHaveLength(3)
   const category = screen.getByText('Categorization Rules (0)')
   const exclusions = screen.getByText('Exclusion Rules (0)')
   expect(category.compareDocumentPosition(exclusions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

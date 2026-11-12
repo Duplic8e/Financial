@@ -1027,7 +1027,7 @@ test('budgeting phone controls row is compact and keeps 44px tap targets', async
 // actions. They share one row, keep the 44px tap target, and selecting a tab
 // must not make the document scroll sideways.
 for (const [name, hash, labels, pick] of [
-  ['budgeting', '#/budget', ['Overview', 'Insights', 'Transactions', 'Setup'], 'Transactions'],
+  ['budgeting', '#/budget', ['This Month', 'Transactions', 'Plan'], 'Transactions'],
   ['investments', '#/investments', ['Portfolio', 'Options', 'Trades', 'Plan vs Actual'], 'Trades'],
 ] as const) {
   test(`${name} tabs are one row of underline tabs`, async ({ page }) => {

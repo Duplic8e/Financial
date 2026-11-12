@@ -249,7 +249,7 @@ test('tab strips are real tabs and survive a reload', async ({ page }) => {
 
   const strip = page.getByRole('tablist', { name: 'Budgeting sections' })
   await expect(strip).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('tab', { name: 'This Month' })).toHaveAttribute('aria-selected', 'true')
 
   await page.getByRole('tab', { name: 'Transactions' }).click()
   await expect(page).toHaveURL(/tab=transactions/)
@@ -276,10 +276,9 @@ test('Investments opens on Portfolio when that is the only tab with data', async
 // Tailwind upgrade, or a new outline-none slipped onto a panel, would
 // reintroduce exactly this without this guard.
 const TAB_PANEL_CASES: { route: string; tabName: string; panelId: string }[] = [
-  { route: '/#/budget', tabName: 'Overview', panelId: 'panel-overview' },
-  { route: '/#/budget', tabName: 'Insights', panelId: 'panel-insights' },
+  { route: '/#/budget', tabName: 'This Month', panelId: 'panel-overview' },
   { route: '/#/budget', tabName: 'Transactions', panelId: 'panel-transactions' },
-  { route: '/#/budget', tabName: 'Setup', panelId: 'panel-setup' },
+  { route: '/#/budget', tabName: 'Plan', panelId: 'panel-setup' },
   { route: '/#/investments', tabName: 'Plan vs Actual', panelId: 'panel-journal' },
   { route: '/#/investments', tabName: 'Portfolio', panelId: 'panel-portfolio' },
   { route: '/#/investments', tabName: 'Trades', panelId: 'panel-trades' },
@@ -445,15 +444,15 @@ const CHART_ROUTES: { path: string; afterNav?: (page: Page) => Promise<void> }[]
   // reason.
   { path: '' },
   // CashFlowWidget (Sankey) and SavingsRateWidget (Area trend + Bar split),
-  // both on the Budgeting Overview tab, which is the default with no
-  // ?tab= param.
-  { path: '#/budget' },
+  // both in Budgeting Insights.
+  { path: '#/budget?tab=insights' },
   // CategoryTrendsWidget (one sparkline LineChart per category), behind the
   // Budgeting Insights tab.
   {
     path: '#/budget',
     afterNav: async (page) => {
-      await page.getByRole('tab', { name: 'Insights' }).click()
+      // Insights is one tap from This Month, not a tab.
+      await page.getByRole('button', { name: /^Insights/ }).click()
       // On phone layouts Category Trends sits in a fold; desktop shows the chart directly.
       const fold = page.getByRole('button', { name: /^Category Trends/ })
       if (await fold.count()) await fold.click()
@@ -869,7 +868,7 @@ for (const [hash, expected] of LEGEND_ROUTES) {
 // only renders once its Split tab is selected, so this guard selects it
 // first rather than asserting a count of zero, which would guard nothing.
 test('the savings split chart on #/budget, once selected, name their series in text', async ({ page }) => {
-  await page.goto('/#/budget')
+  await page.goto('/#/budget?tab=insights')
   await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'Split' }).click()
   await page.waitForTimeout(900)

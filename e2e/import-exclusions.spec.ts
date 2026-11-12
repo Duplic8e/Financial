@@ -19,7 +19,7 @@ async function openExclude(page: Page, description: string) {
 }
 // The phone Setup tab splits into Targets, Categories and Rules; the exclusion rules sit under Rules.
 async function openRules(page: Page) {
-  await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+  await page.getByRole('tab', { name: 'Plan', exact: true }).click()
   if (isPhone(page)) {
     await page.getByRole('tablist', { name: 'Setup sections' }).getByRole('tab', { name: 'Rules', exact: true }).click()
     // The undo toast floats over the rule buttons on a phone, so dismiss it first.

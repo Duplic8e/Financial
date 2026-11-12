@@ -53,12 +53,14 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
         } }))
       }, creditOnly)
       await page.reload()
-      await page.getByRole('tab', { name: 'Overview', exact: true }).click()
+      await page.getByRole('tab', { name: 'This Month', exact: true }).click()
       // The phone Overview has no Income card; the In figure of its Net Change card carries the same number.
       const phone = viewport.width < 768 || viewport.height < 500
       const incomeCard = phone ? page.getByTestId('overview-in') : page.getByRole('heading', { name: 'Income', exact: true }).locator('xpath=../..')
       await expect(incomeCard).toContainText(creditOnly ? '$0' : '$1,000')
       await expect(incomeCard).not.toContainText('$1,040')
+      // The Cash Flow chart lives in Insights, one tap from This Month.
+      await page.getByRole('button', { name: /^Insights/ }).click()
       const flow = page.getByRole('img', { name: /^Cash flow this period:/ })
       await expect(flow).toHaveAttribute('aria-label', creditOnly
         ? 'Cash flow this period: $0 income across 0 sources plus $40 expense credits across 1 groups into $0 of positive net expenses across 0 groups, leaving $40 net remaining'
@@ -92,7 +94,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
       await svg.locator('g title').filter({ hasText: /^Net remaining$/ }).locator('..').locator('rect').hover()
       await expect(flow.locator('.recharts-tooltip-wrapper')).toContainText(creditOnly ? '$40' : '$540')
       await flowCard.screenshot({ path: `.superpowers/sdd/screenshots/refund-cashflow-${creditOnly ? 'credit-only' : 'mixed'}-${viewport.width}.png` })
-      await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+      await page.getByRole('tab', { name: 'Plan', exact: true }).click()
       if (viewport.width < 768) {
         // Phone Setup shows the net credit and the purchases / refunds split inline on the category row.
         const row = page.getByTestId('budget-setup-mobile').locator('span.flex-1.min-w-0').filter({ hasText: /^Shopping/ })
@@ -100,7 +102,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 320, height: 700 
         await expect(row).toContainText('$60.00 purchases · $100.00 refunds & payments')
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       } else {
-        await page.getByRole('tab', { name: 'Setup', exact: true }).click()
+        await page.getByRole('tab', { name: 'Plan', exact: true }).click()
         const shoppingInput = page.locator('input[value="Shopping"]')
         const category = shoppingInput.locator('xpath=../..')
         await expect(category).toContainText('$40.00 net credit')
@@ -171,7 +173,7 @@ test('manual split payment saves signed amounts and stays editable after disabli
   await expect(panel.getByRole('button', { name: 'Refunds & Payments', exact: true })).toHaveCount(0)
   await page.keyboard.press('Escape')
   expect((await budget(page)).transactions).toEqual(saved.transactions)
-  await page.getByRole('tab', { name: 'Overview', exact: true }).click()
+  await page.getByRole('tab', { name: 'This Month', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Expenses', exact: true }).locator('xpath=../..')).toContainText('-$40')
   await edit(page, 'Manual receipt')
   await expect(panel.getByRole('button', { name: 'Refunds & Payments', exact: true })).toHaveAttribute('aria-pressed', 'true')
@@ -219,7 +221,7 @@ test('shared settlement cancellation preserves the IOU and conversion requires e
   expect(after.transactions.settlement).toMatchObject({ id: 'settlement', type: 'expense', amount: -40 })
   expect(after.transactions.settlement.reimbursement).toBeUndefined()
   expect(after.transactions.purchase.shared.totalAmount - after.transactions.purchase.amount).toBe(40)
-  await page.getByRole('tab', { name: 'Overview', exact: true }).click()
+  await page.getByRole('tab', { name: 'This Month', exact: true }).click()
   const owed = page.getByRole('heading', { name: 'Owed to Me', exact: true }).locator('xpath=../..')
   await expect(owed).toContainText('Alex')
   await expect(owed).toContainText('$40')
